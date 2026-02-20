@@ -15,7 +15,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20' # Vite가 요구하는 20버전 이상으로 설정
+          cache: 'npm'       # npm 캐시를 사용하면 다음 빌드부터 훨씬 빨라집니다.
+          cache-dependency-path: client/package-lock.json # 캐시 기준 파일 경로
 
       - name: Install & Build Client
         run: |
