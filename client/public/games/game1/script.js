@@ -2,7 +2,7 @@
 let score = 0;
 let timeLeft = 10; // 제한 시간 10초
 let timerInterval;
-const GOAL_SCORE = 50; // 목표 점수
+const GOAL_SCORE = 60; // 목표 점수
 
 // 화면 요소 가져오기
 const scoreDisplay = document.getElementById('current-score');
