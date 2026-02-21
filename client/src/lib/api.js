@@ -21,6 +21,13 @@ export async function fetchTiles({ minLat, maxLat, minLng, maxLng }) {
   return res.data
 }
 
+export async function fetchSpecialCenters({ minLat, maxLat, minLng, maxLng }) {
+  const res = await api.get('/special-centers', {
+    params: { min_lat: minLat, max_lat: maxLat, min_lng: minLng, max_lng: maxLng },
+  })
+  return res.data
+}
+
 export async function occupyTile({ gridId, university, level = 1 }) {
   const res = await api.post('/occupy', { grid_id: gridId, university, level })
   return res.data
@@ -100,6 +107,18 @@ export async function claimTileGame(gridId, sessionId) {
     session_id: sessionId,
   })
   return response.data
+}
+
+/**
+ * Create websocket connection for boss game realtime updates.
+ *
+ * @param {string} gridId
+ */
+export function createBossGameSocket(gridId) {
+  const apiUrl = new URL(api.defaults.baseURL, window.location.origin)
+  const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsBase = `${wsProtocol}//${apiUrl.host}`
+  return new WebSocket(`${wsBase}/api/games/${gridId}/ws`)
 }
 
 export default api
