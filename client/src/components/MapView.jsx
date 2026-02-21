@@ -207,17 +207,24 @@ export default function MapView({ center }) {
   }, []); // 마운트 시 한 번만 실행되도록 빈 배열 고정
 
   // ─── 내 위치 갱신 시 지도 덜덜거림 버그 해결 ────────────────────
-  useEffect(() => {
-    if (!mapRef.current || !window.kakao?.maps) return;
-    
-    const currentCenter = mapRef.current.getCenter();
-    if (Math.abs(currentCenter.getLat() - center.lat) > 0.0001 || 
-        Math.abs(currentCenter.getLng() - center.lng) > 0.0001) {
-      const position = new window.kakao.maps.LatLng(center.lat, center.lng);
-      mapRef.current.setCenter(position);
-      markerRef.current?.setPosition(position);
-    }
-  }, [center.lat, center.lng]);
+useEffect(() => {
+  if (!mapRef.current || !window.kakao?.maps) return;
+
+  const currentCenter = mapRef.current.getCenter();
+  const dLat = Math.abs(currentCenter.getLat() - center.lat);
+  const dLng = Math.abs(currentCenter.getLng() - center.lng);
+
+  // 덜덜거림 방지
+  if (dLat <= 0.00005 && dLng <= 0.00005) return;
+
+  const position = new window.kakao.maps.LatLng(center.lat, center.lng);
+
+  // UX: 이동은 panTo
+  mapRef.current.panTo(position);
+
+  // 중앙 마커도 같이 이동
+  markerRef.current?.setPosition(position);
+}, [center?.lat, center?.lng]);
 
   // ─── 컴포넌트 언마운트 시 리소스 정리 ─────────────────────
   useEffect(() => {
