@@ -1,58 +1,155 @@
-import { AnimatePresence, motion } from 'framer-motion'
+/**
+ * 타일 정보 바텀 시트 컴포넌트 (병합 완료)
+ * ──────────────────────────────────────
+ * [내 디자인] 토스 앱 스타일 바텀 시트 — 글래스모피즘, 대학별 그라데이션 버튼,
+ *            스프링 애니메이션, 딤드 오버레이
+ * [상태 연결] Zustand selectedTile ↔ MapView의 setSelectedTile로 연결됨
+ *            useOccupyTile 뮤테이션으로 점령 API 호출
+ */
+
+import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../store/gameStore'
+import { useOccupyTile } from '../hooks/useTiles'
 
-const MotionPanel = motion.div
+// ─── 대학교별 그라데이션 · 글로우 · 이모지 매핑 ─────────────
+const UNIV_STYLES = {
+  서울대학교: {
+    gradient: 'from-blue-500 to-indigo-600',
+    glow: 'shadow-[0_0_24px_rgba(59,130,246,0.45)]',
+    emoji: '🔵',
+  },
+  연세대학교: {
+    gradient: 'from-sky-400 to-blue-600',
+    glow: 'shadow-[0_0_24px_rgba(56,189,248,0.45)]',
+    emoji: '🦅',
+  },
+  고려대학교: {
+    gradient: 'from-red-500 to-rose-600',
+    glow: 'shadow-[0_0_24px_rgba(239,68,68,0.45)]',
+    emoji: '🐯',
+  },
+}
 
+const DEFAULT_STYLE = {
+  gradient: 'from-indigo-500 to-purple-600',
+  glow: 'shadow-[0_0_24px_rgba(99,102,241,0.4)]',
+  emoji: '⚡',
+}
+
+/** @param {string|null} univ */
+function getStyle(univ) {
+  if (!univ) return DEFAULT_STYLE
+  return UNIV_STYLES[univ] || DEFAULT_STYLE
+}
+
+/**
+ * 토스 스타일 바텀 시트.
+ * MapView에서 폴리곤 클릭 → setSelectedTile → 이 패널이 열린다.
+ */
 export default function TileInfoPanel() {
-  const selectedTile = useGameStore((state) => state.selectedTile)
-  const setSelectedTile = useGameStore((state) => state.setSelectedTile)
+  const selectedTile = useGameStore((s) => s.selectedTile)
+  const setSelectedTile = useGameStore((s) => s.setSelectedTile)
+  const user = useGameStore((s) => s.user)
+  const { mutate: occupy, isPending } = useOccupyTile()
+
+  /** 점령 버튼 클릭 → 소속 대학교로 해당 타일을 점령 요청 */
+  const handleOccupy = () => {
+    if (!selectedTile) return
+    const university = user?.university || '우리대학교'
+    occupy(
+      { gridId: selectedTile.grid_id, university },
+      { onSuccess: () => setSelectedTile(null) }
+    )
+  }
+
+  const style = getStyle(selectedTile?.owner_univ)
+  const isOwned = !!selectedTile?.owner_univ
 
   return (
     <AnimatePresence>
       {selectedTile && (
-        <MotionPanel
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-16 left-0 right-0 z-40 rounded-t-2xl border-t border-primary/30 bg-surface-light p-5 shadow-2xl"
-        >
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-text-secondary/30" />
+        <>
+          {/* 딤드 오버레이 — 탭하면 시트 닫기 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setSelectedTile(null)}
+            className="fixed inset-0 z-[55] bg-black/20"
+          />
 
-          <div className="mb-4 flex items-start justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-text-primary">
-                Frontend grid cell
-              </h3>
-              <p className="mt-1 text-xs text-text-secondary">
-                {selectedTile.grid_id}
-              </p>
+          {/* 바텀 시트 본체 */}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 340 }}
+            className="fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-2xl rounded-t-[2.5rem] px-6 pt-5 pb-10 shadow-[0_-10px_60px_rgba(0,0,0,0.12)]"
+          >
+            {/* 핸들 바 */}
+            <div className="w-10 h-[5px] bg-slate-200 rounded-full mx-auto mb-5" />
+
+            {/* 소속 대학 뱃지 + 상태 */}
+            <div className="flex items-center gap-3 mb-5">
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', delay: 0.1 }}
+                className="text-3xl"
+              >
+                {isOwned ? style.emoji : '🏳️'}
+              </motion.span>
+              <div>
+                <h3 className="text-xl font-extrabold tracking-tight text-slate-800">
+                  {isOwned
+                    ? `${selectedTile.owner_univ} 점령중`
+                    : '빈 땅 발견!'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                  {selectedTile.grid_id}
+                </p>
+              </div>
             </div>
 
-            <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-semibold text-primary">
-              30m x 30m
-            </span>
-          </div>
+            {/* 레벨 표시 영역 */}
+            <div className="flex items-center justify-between bg-slate-50 rounded-2xl px-5 py-4 mb-5">
+              <span className="text-sm font-semibold text-slate-500">
+                점령 레벨
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl font-black tracking-tight text-slate-800">
+                  {selectedTile.level || 0}
+                </span>
+                <span className="text-sm font-bold text-slate-400">LV</span>
+              </div>
+            </div>
 
-          <p className="mb-4 text-xs text-text-secondary">
-            Occupy API is disabled for now. Backend integration comes next.
-          </p>
-
-          <div className="flex gap-3">
-            <button
-              disabled
-              className="flex-1 cursor-not-allowed rounded-xl bg-surface px-4 py-3 font-bold text-text-secondary/60"
+            {/* 점령 버튼 — 토스 송금 버튼처럼 크고 시원하게 */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleOccupy}
+              disabled={isPending}
+              className={`
+                w-full rounded-2xl py-5 text-xl font-bold text-white
+                bg-gradient-to-r ${style.gradient} ${style.glow}
+                disabled:opacity-50 disabled:shadow-none
+                active:brightness-95 transition-all duration-150
+              `}
             >
-              Occupy (coming soon)
-            </button>
-            <button
-              onClick={() => setSelectedTile(null)}
-              className="rounded-xl bg-primary px-4 py-3 font-bold text-white"
-            >
-              Close
-            </button>
-          </div>
-        </MotionPanel>
+              {isPending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  점령 중...
+                </span>
+              ) : isOwned ? (
+                '이 타일 빼앗기'
+              ) : (
+                '이 타일 점령하기'
+              )}
+            </motion.button>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   )

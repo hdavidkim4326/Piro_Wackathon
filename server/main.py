@@ -3,6 +3,13 @@ Campus Turf War — FastAPI 메인 엔트리포인트
 ──────────────────────────────────────────
 앱 인스턴스를 생성하고, CORS 미들웨어를 설정하고,
 라우터를 등록하고, 서버 시작 시 DB 테이블을 초기화한다.
+
+[서비스 구동 흐름]
+  1. lifespan → init_db() 로 테이블 자동 생성
+  2. CORS 미들웨어 등록 (개발: allow all)
+  3. /api 하위에 tiles, ranking 라우터 마운트
+  4. /health 헬스체크 엔드포인트
+  5. /docs 에서 Swagger UI 확인 가능
 """
 
 from contextlib import asynccontextmanager
@@ -11,14 +18,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.tiles import router as tiles_router
+from api.ranking import router as ranking_router
 from database import init_db
 
 
 # ─── 앱 라이프사이클 관리 ────────────────────────────────────
-# FastAPI 서버가 시작될 때 DB 테이블을 자동 생성한다.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """서버 시작/종료 시 실행되는 라이프사이클 핸들러"""
+    """
+    서버 시작 시 → DB 테이블 자동 생성 (CREATE IF NOT EXISTS)
+    서버 종료 시 → (현재는 별도 정리 작업 없음)
+    """
     await init_db()
     yield
 
@@ -27,14 +37,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Campus Turf War API",
     description="대학교 진영 지도 점령 게임 백엔드 API",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
     docs_url="/api/docs", 
     openapi_url="/api/openapi.json"
 )
 
-# ─── CORS 미들웨어 설정 ──────────────────────────────────────
-# 개발 단계에서는 모든 오리진을 허용한다.
+# ─── CORS 미들웨어 ───────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,12 +53,12 @@ app.add_middleware(
 )
 
 # ─── 라우터 등록 ─────────────────────────────────────────────
-# /api 프리픽스 아래에 타일 관련 엔드포인트를 묶는다.
 app.include_router(tiles_router, prefix="/api", tags=["tiles"])
+app.include_router(ranking_router, prefix="/api", tags=["ranking"])
 
 
-# ─── 헬스체크 엔드포인트 ─────────────────────────────────────
-@app.get("/health")
+# ─── 헬스체크 ────────────────────────────────────────────────
+@app.get("/health", tags=["system"])
 async def health_check():
     """서버 상태 확인용 엔드포인트"""
     return {"status": "ok", "service": "Campus Turf War API"}
