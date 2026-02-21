@@ -1,8 +1,8 @@
 /**
  * 이벤트(챌린지) 페이지
  * ─────────────────────
- * Apple App Store + Toss 스타일의 챌린지 허브.
- * 현재 진행 중인 대학 대전, 프라이빗 방, 커밍순 챌린지를 보여준다.
+ * Apple App Store + Toss 스타일의 하이엔드 챌린지 허브.
+ * Flexbox gap을 활용하여 절대 레이아웃이 깨지지 않도록 설계됨.
  */
 
 import { useState, useEffect } from 'react'
@@ -47,8 +47,8 @@ const UPCOMING = [
     title: '고향 대전',
     desc: '내 고향 vs 네 고향, 지역 자존심 대결',
     date: '2026년 4월',
-    gradient: 'from-orange-500 to-rose-500',
-    shadow: 'shadow-orange-500/20',
+    gradient: 'from-[#FF7A00] to-[#FF004D]',
+    shadow: 'shadow-[#FF7A00]/20',
     category: '지역',
   },
   {
@@ -57,8 +57,8 @@ const UPCOMING = [
     title: '직장인 대전',
     desc: '회사 주변 영토를 확보하라!',
     date: '2026년 5월',
-    gradient: 'from-cyan-500 to-blue-500',
-    shadow: 'shadow-cyan-500/20',
+    gradient: 'from-[#00C6FF] to-[#0072FF]',
+    shadow: 'shadow-[#00C6FF]/20',
     category: '직장',
   },
   {
@@ -67,8 +67,8 @@ const UPCOMING = [
     title: '동아리 배틀',
     desc: '우리 동아리가 캠퍼스 최강!',
     date: '2026년 4월',
-    gradient: 'from-fuchsia-500 to-pink-500',
-    shadow: 'shadow-fuchsia-500/20',
+    gradient: 'from-[#D946EF] to-[#8B5CF6]',
+    shadow: 'shadow-[#D946EF]/20',
     category: '동아리',
   },
   {
@@ -77,27 +77,17 @@ const UPCOMING = [
     title: '축제 특별전',
     desc: '대학 축제 기간 한정 영토 전쟁',
     date: '2026년 5월',
-    gradient: 'from-amber-400 to-orange-500',
-    shadow: 'shadow-amber-500/20',
+    gradient: 'from-[#F59E0B] to-[#EF4444]',
+    shadow: 'shadow-[#F59E0B]/20',
     category: '이벤트',
-  },
-  {
-    id: 5,
-    emoji: '🏫',
-    title: '고등학교 동문전',
-    desc: '모교를 위해 한 판 더!',
-    date: '2026년 6월',
-    gradient: 'from-emerald-500 to-teal-500',
-    shadow: 'shadow-emerald-500/20',
-    category: '동문',
   },
 ]
 
 // ─── 스태거 애니메이션 ───────────────────────────────────────
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 22, stiffness: 260 } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 25, stiffness: 280 } },
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -106,158 +96,161 @@ export default function Events() {
   const countdown = useCountdown(HERO.endDate)
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 pb-28">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/80 px-5 py-3.5 backdrop-blur-xl">
-        <h1 className="text-lg font-extrabold text-slate-800">챌린지</h1>
+    // 🔥 백그라운드는 Toss 특유의 아주 밝은 회색(#F2F4F6) 느낌의 slate-50 사용, 하단 네비 공간(pb-32) 완벽 확보
+    <div className="h-full overflow-y-auto bg-slate-50 pb-32 flex flex-col">
+      
+      {/* ━━━ 헤더 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <header className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl px-6 py-4 border-b border-black/[0.04]">
+        <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">챌린지 탐색</h1>
       </header>
 
+      {/* 🔥 [핵심 레이아웃] 모든 섹션은 flex-col과 gap-8로 묶여 절대 서로 겹치거나 파고들지 않습니다. */}
       <motion.div
         variants={stagger}
         initial="hidden"
         animate="visible"
-        className="px-4 pt-4"
+        className="flex flex-col gap-8 px-5 pt-6"
       >
+        
         {/* ━━━ 섹션 1: 히어로 — 현재 진행 중 ━━━━━━━━━━━━━━━━━ */}
         <motion.div variants={fadeUp}>
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-5 shadow-xl shadow-indigo-500/20">
+          {/* 배너 내부도 flex-col과 gap-5로 정렬하여 버튼이 삐져나가는 현상 원천 차단 */}
+          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#5C6BFA] to-[#8050E3] p-6 shadow-xl shadow-[#5C6BFA]/20 flex flex-col gap-5">
             {/* 배경 장식 */}
-            <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/[0.07] blur-2xl" />
+            <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/[0.06] blur-2xl" />
 
-            {/* LIVE 뱃지 */}
-            <div className="relative z-10 mb-3 flex items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+            {/* LIVE 뱃지 & 헤더 */}
+            <div className="relative z-10 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-md">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                 </span>
                 LIVE
               </span>
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/80 backdrop-blur-sm">
-                MVP 시즌 1
-              </span>
+              <span className="text-[12px] font-bold text-white/70">MVP 시즌 1</span>
             </div>
 
-            {/* 타이틀 */}
-            <h2 className="relative z-10 text-[22px] font-black leading-tight text-white">
-              {HERO.title}
-            </h2>
-            <p className="relative z-10 mt-0.5 text-sm font-semibold text-white/70">
-              {HERO.subtitle}
-            </p>
+            {/* 타이틀 영역 */}
+            <div className="relative z-10 flex flex-col gap-1">
+              <h2 className="text-[24px] font-extrabold leading-tight text-white tracking-tight">
+                {HERO.title}
+              </h2>
+              <p className="text-[14px] font-medium text-white/80">
+                {HERO.subtitle}
+              </p>
+            </div>
 
             {/* 카운트다운 */}
-            <div className="relative z-10 mt-4 flex gap-2">
+            <div className="relative z-10 flex gap-2">
               {[
                 { val: countdown.days, label: '일' },
                 { val: countdown.hours, label: '시' },
                 { val: countdown.minutes, label: '분' },
                 { val: countdown.seconds, label: '초' },
               ].map((t) => (
-                <div key={t.label} className="flex flex-col items-center rounded-xl bg-white/15 px-3 py-2 backdrop-blur-sm">
-                  <span className="text-lg font-black tabular-nums text-white">{String(t.val).padStart(2, '0')}</span>
-                  <span className="text-[10px] font-semibold text-white/60">{t.label}</span>
+                <div key={t.label} className="flex flex-1 flex-col items-center rounded-2xl bg-white/15 py-2.5 backdrop-blur-md border border-white/10">
+                  <span className="text-xl font-black tabular-nums text-white leading-none mb-1">{String(t.val).padStart(2, '0')}</span>
+                  <span className="text-[11px] font-bold text-white/60">{t.label}</span>
                 </div>
               ))}
-              <div className="flex flex-1 items-center justify-end">
-                <span className="text-[11px] font-medium text-white/50">남은 시간</span>
-              </div>
             </div>
 
-            {/* 통계 */}
-            <div className="relative z-10 mt-4 flex gap-3">
-              <div className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 backdrop-blur-sm">
-                <span className="text-sm">👥</span>
-                <span className="text-xs font-bold text-white">{HERO.participants.toLocaleString()}명</span>
+            {/* 통계 & 참여 버튼 */}
+            <div className="relative z-10 flex flex-col gap-4 mt-1">
+              <div className="flex gap-3">
+                <div className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 py-2.5 backdrop-blur-sm">
+                  <span className="text-sm">👥</span>
+                  <span className="text-[12px] font-bold text-white">{HERO.participants.toLocaleString()}명</span>
+                </div>
+                <div className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/10 py-2.5 backdrop-blur-sm">
+                  <span className="text-sm">🗺️</span>
+                  <span className="text-[12px] font-bold text-white">{HERO.territories.toLocaleString()}칸</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 backdrop-blur-sm">
-                <span className="text-sm">🗺️</span>
-                <span className="text-xs font-bold text-white">{HERO.territories.toLocaleString()}칸 점령</span>
-              </div>
-            </div>
 
-            {/* 참여 버튼 */}
-            <button className="relative z-10 mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white font-bold text-indigo-600 shadow-lg transition-all active:scale-[0.98]">
-              <span className="text-base">🎯</span>
-              <span className="text-sm">{user ? '지도에서 점령하기' : '참여하기'}</span>
-            </button>
+              <button className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-white font-bold text-[#5C6BFA] shadow-lg transition-transform active:scale-[0.97]">
+                <span className="text-lg">🎯</span>
+                <span className="text-[15px]">{user ? '지도에서 점령하기' : '지금 바로 참여하기'}</span>
+              </button>
+            </div>
           </div>
         </motion.div>
 
         {/* ━━━ 섹션 2: 프라이빗 방 CTA ━━━━━━━━━━━━━━━━━━━━━━ */}
-        <motion.div variants={fadeUp} className="mt-5">
-          <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-gradient-to-br from-violet-100 to-indigo-100 blur-xl" />
+        <motion.div variants={fadeUp}>
+          {/* 🔥 찌그러짐 방지: p-6 적용 및 flex-col로 상하 분리 */}
+          <div className="relative overflow-hidden rounded-[28px] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col gap-5">
+            <div className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-gradient-to-br from-violet-50 to-[#F2F4F6] blur-2xl" />
 
-            <div className="relative z-10 flex items-start gap-4">
-              {/* 아이콘 */}
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 text-2xl shadow-lg shadow-violet-500/20">
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-slate-900 text-2xl shadow-lg shadow-slate-900/10">
                 🔒
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base font-extrabold text-slate-800">프라이빗 챌린지</h3>
-                <p className="mt-0.5 text-[13px] leading-relaxed text-slate-400">
-                  친구들만의 비공개 방을 만들고 초대 링크를 공유해 나만의 영토 전쟁을 시작하세요.
+              <div className="flex-1">
+                <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">프라이빗 챌린지</h3>
+                <p className="mt-1 text-[13px] leading-snug text-slate-500">
+                  초대 링크를 공유해 친구들만의<br/>비공개 전쟁을 시작하세요.
                 </p>
               </div>
             </div>
 
-            {/* 기능 미리보기 */}
-            <div className="relative z-10 mt-4 flex gap-2">
+            {/* 🔥 Grid 레이아웃 적용으로 화면이 좁아져도 절대 찌그러지지 않음 */}
+            <div className="relative z-10 grid grid-cols-3 gap-2">
               {[
                 { icon: '🏠', label: '방 만들기' },
                 { icon: '🔗', label: '초대 링크' },
                 { icon: '📊', label: '전용 랭킹' },
               ].map((f) => (
-                <div key={f.label} className="flex flex-1 flex-col items-center gap-1.5 rounded-2xl bg-slate-50 py-3">
-                  <span className="text-lg">{f.icon}</span>
-                  <span className="text-[11px] font-bold text-slate-500">{f.label}</span>
+                <div key={f.label} className="flex flex-col items-center gap-1.5 rounded-2xl bg-slate-50 py-3.5 border border-slate-100/50">
+                  <span className="text-xl">{f.icon}</span>
+                  <span className="text-[11px] font-bold text-slate-600">{f.label}</span>
                 </div>
               ))}
             </div>
 
-            <button className="relative z-10 mt-4 flex h-12 w-full items-center justify-center rounded-2xl border-2 border-slate-200 text-sm font-bold text-slate-600 transition-all active:scale-[0.98] active:bg-slate-50">
+            <button className="relative z-10 flex h-14 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white text-[14px] font-bold text-slate-400 transition-colors active:bg-slate-50 cursor-not-allowed">
               곧 오픈 예정
             </button>
           </div>
         </motion.div>
 
         {/* ━━━ 섹션 3: 커밍순 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <motion.div variants={fadeUp} className="mt-8">
-          <div className="mb-3 flex items-end justify-between">
+        <motion.div variants={fadeUp} className="flex flex-col gap-4">
+          <div className="flex items-end justify-between px-1">
             <div>
-              <h2 className="text-lg font-extrabold text-slate-800">곧 열리는 챌린지</h2>
-              <p className="mt-0.5 text-xs text-slate-400">다양한 소속으로 땅따먹기를 즐겨보세요</p>
+              <h2 className="text-[20px] font-bold text-slate-900 tracking-tight">곧 열리는 챌린지</h2>
+              <p className="mt-1 text-[13px] text-slate-500">다양한 소속으로 땅따먹기를 즐겨보세요</p>
             </div>
-            <span className="text-xs font-semibold text-indigo-500">{UPCOMING.length}개</span>
+            <span className="text-[13px] font-bold text-[#5C6BFA]">{UPCOMING.length}개</span>
           </div>
-        </motion.div>
 
-        {/* 가로 스크롤 카드 */}
-        <motion.div variants={fadeUp} className="-mx-4 mb-6">
-          <div className="flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory scrollbar-hide">
+          {/* 🔥 가로 스크롤 카드 영역: 화면 양끝까지 가득 차게 -mx-5 px-5 적용 */}
+          <div className="-mx-5 px-5 flex gap-4 overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden pb-4">
             {UPCOMING.map((item) => (
               <div
                 key={item.id}
-                className="w-[200px] shrink-0 snap-start rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all active:scale-[0.97]"
+                // 🔥 w-[260px] shrink-0 설정으로 카드가 절대 줄어들거나 찌그러지지 않음
+                className="w-[260px] shrink-0 snap-start rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex flex-col gap-4"
               >
-                {/* 아이콘 + 카테고리 */}
-                <div className="mb-3 flex items-center justify-between">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} text-xl shadow-lg ${item.shadow}`}>
+                <div className="flex items-center justify-between">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br ${item.gradient} text-2xl shadow-lg ${item.shadow}`}>
                     {item.emoji}
                   </div>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-500">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500">
                     {item.category}
                   </span>
                 </div>
 
-                <h4 className="text-sm font-extrabold text-slate-800">{item.title}</h4>
-                <p className="mt-1 text-[12px] leading-relaxed text-slate-400 line-clamp-2">{item.desc}</p>
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <h4 className="text-[17px] font-bold text-slate-900 tracking-tight truncate">{item.title}</h4>
+                  <p className="text-[13px] leading-relaxed text-slate-500 line-clamp-2 min-h-[40px]">{item.desc}</p>
+                </div>
 
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-slate-400">{item.date}</span>
-                  <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-500">
+                <div className="flex items-center justify-between mt-auto pt-2">
+                  <span className="text-[12px] font-bold text-slate-400">{item.date}</span>
+                  <span className="rounded-full bg-[#5C6BFA]/10 px-3 py-1 text-[11px] font-bold text-[#5C6BFA]">
                     Coming Soon
                   </span>
                 </div>
@@ -267,13 +260,14 @@ export default function Events() {
         </motion.div>
 
         {/* ━━━ 하단 비전 텍스트 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <motion.div variants={fadeUp} className="mb-6 rounded-2xl bg-slate-100/80 p-5 text-center">
-          <p className="text-xs leading-relaxed text-slate-400">
-            <span className="font-bold text-slate-500">Campus Turf War</span>는 대학생뿐 아니라
-            직장인, 동아리, 지역 등 다양한 소속 기반의 땅따먹기 챌린지를 준비하고 있습니다.
-            더 많은 전쟁이 곧 찾아옵니다! 🚀
+        <motion.div variants={fadeUp} className="mb-2 rounded-[24px] bg-slate-200/50 p-6 text-center">
+          <p className="text-[13px] leading-relaxed text-slate-500">
+            <span className="font-bold text-slate-700">Campus Turf War</span>는 대학생뿐 아니라<br/>
+            직장인, 동아리, 지역 등 다양한 소속 기반의<br/>
+            땅따먹기 챌린지를 준비하고 있습니다. 🚀
           </p>
         </motion.div>
+
       </motion.div>
     </div>
   )

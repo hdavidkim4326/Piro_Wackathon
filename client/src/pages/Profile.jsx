@@ -1,24 +1,24 @@
 /**
  * 마이페이지 (프로필)
  * ─────────────────
- * 비로그인 → /auth로 유도, 로그인 → 프로필 카드 + 로그아웃.
+ * 비로그인 → /auth로 유도, 로그인 → 프로필 카드 + 데모 모드 토글 + 로그아웃.
  */
 
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
-const MotionDiv = motion.div
-
 export default function Profile() {
   const navigate = useNavigate()
   const user = useGameStore((s) => s.user)
   const logout = useGameStore((s) => s.logout)
+  const demoMode = useGameStore((s) => s.demoMode)
+  const setDemoMode = useGameStore((s) => s.setDemoMode)
 
   if (!user) {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-slate-50 px-6">
-        <MotionDiv
+        <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="text-center"
@@ -34,7 +34,7 @@ export default function Profile() {
           >
             학교 인증하기
           </button>
-        </MotionDiv>
+        </motion.div>
       </div>
     )
   }
@@ -45,8 +45,9 @@ export default function Profile() {
         <h1 className="mx-auto max-w-lg text-xl font-bold text-slate-800">마이페이지</h1>
       </header>
 
-      <div className="mx-auto max-w-lg px-4 pt-8">
-        <MotionDiv
+      <div className="mx-auto max-w-lg px-4 pt-8 flex flex-col gap-4">
+        {/* 프로필 카드 */}
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', damping: 20 }}
@@ -61,13 +62,55 @@ export default function Profile() {
               <p className="truncate text-sm font-medium text-slate-400">{user.university}</p>
             </div>
           </div>
-        </MotionDiv>
+        </motion.div>
 
-        <MotionDiv
+        {/* 데모 모드 토글 */}
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', damping: 20, delay: 0.1 }}
-          className="mt-4"
+          transition={{ type: 'spring', damping: 20, delay: 0.08 }}
+          className="rounded-3xl bg-white border border-slate-100 shadow-lg shadow-slate-900/5"
+        >
+          <button
+            onClick={() => setDemoMode(!demoMode)}
+            className="flex w-full items-center justify-between px-5 py-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${
+                demoMode
+                  ? 'bg-rose-100 text-rose-500'
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                🛰️
+              </div>
+              <div className="text-left">
+                <p className="text-[15px] font-bold text-slate-800">데모 모드</p>
+                <p className="text-xs text-slate-400">지도 탭으로 위치를 자유롭게 이동</p>
+              </div>
+            </div>
+            <div className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${
+              demoMode ? 'bg-rose-500' : 'bg-slate-200'
+            }`}>
+              <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                demoMode ? 'translate-x-5' : 'translate-x-0.5'
+              }`} />
+            </div>
+          </button>
+
+          {demoMode && (
+            <div className="border-t border-slate-100 px-5 py-3">
+              <p className="text-xs font-medium text-rose-500">
+                GPS가 비활성화되었습니다. 지도를 탭하면 해당 위치로 즉시 이동합니다.
+              </p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* 로그아웃 */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 20, delay: 0.16 }}
         >
           <button
             onClick={() => { logout(); navigate('/') }}
@@ -75,7 +118,7 @@ export default function Profile() {
           >
             로그아웃
           </button>
-        </MotionDiv>
+        </motion.div>
       </div>
     </div>
   )

@@ -89,12 +89,15 @@ export default function MapView({ center }) {
   const markerRef = useRef(null)
   const idleHandlerRef = useRef(null)
   const drawPolygonsRef = useRef(null)
+  const demoClickRef = useRef(null)
 
   const [mapReady, setMapReady] = useState(false)
   const [tileCount, setTileCount] = useState(0)
 
   const setMapBounds = useGameStore((state) => state.setMapBounds)
   const setSelectedTile = useGameStore((state) => state.setSelectedTile)
+  const demoMode = useGameStore((s) => s.demoMode)
+  const setLocation = useGameStore((s) => s.setLocation)
   const { data: serverTiles } = useTiles()
 
   const clearOverlays = useCallback(() => {
@@ -280,6 +283,27 @@ export default function MapView({ center }) {
     }
   }, [center.lat, center.lng, handleIdle])
 
+  // 데모 모드: 지도 클릭 → 위치 텔레포트
+  useEffect(() => {
+    if (!mapRef.current || !window.kakao?.maps) return
+
+    if (demoClickRef.current) {
+      window.kakao.maps.event.removeListener(mapRef.current, 'click', demoClickRef.current)
+      demoClickRef.current = null
+    }
+
+    if (demoMode) {
+      const handler = (mouseEvent) => {
+        const lat = mouseEvent.latLng.getLat()
+        const lng = mouseEvent.latLng.getLng()
+        setLocation({ lat, lng })
+        markerRef.current?.setPosition(new window.kakao.maps.LatLng(lat, lng))
+      }
+      demoClickRef.current = handler
+      window.kakao.maps.event.addListener(mapRef.current, 'click', handler)
+    }
+  }, [demoMode, setLocation, mapReady])
+
   useEffect(() => {
     if (!mapRef.current || !window.kakao?.maps || !center) return
 
@@ -295,12 +319,13 @@ export default function MapView({ center }) {
 
   useEffect(() => {
     return () => {
-      if (mapRef.current && idleHandlerRef.current && window.kakao?.maps?.event) {
-        window.kakao.maps.event.removeListener(
-          mapRef.current,
-          'idle',
-          idleHandlerRef.current
-        )
+      if (mapRef.current && window.kakao?.maps?.event) {
+        if (idleHandlerRef.current) {
+          window.kakao.maps.event.removeListener(mapRef.current, 'idle', idleHandlerRef.current)
+        }
+        if (demoClickRef.current) {
+          window.kakao.maps.event.removeListener(mapRef.current, 'click', demoClickRef.current)
+        }
       }
       markerRef.current?.setMap(null)
       clearOverlays()
@@ -327,6 +352,12 @@ export default function MapView({ center }) {
           5x5
         </span>
       </div>
+
+      {demoMode && mapReady && (
+        <div className="absolute bottom-32 left-1/2 z-30 -translate-x-1/2 animate-pulse rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
+          DEMO — 지도를 탭하여 이동
+        </div>
+      )}
 
       {sdkMissing && (
         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">

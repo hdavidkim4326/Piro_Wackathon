@@ -1,10 +1,17 @@
+/**
+ * 타일 미니게임 모달
+ * ──────────────────
+ * 게임 성공 시 즉시 onSuccess를 호출하여 점령 API를 트리거한다.
+ * 서버 세션(submit/claim)은 백그라운드로 처리하여 체인 끊김을 방지한다.
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useGameStore from '../store/gameStore'
 import {
-  claimTileGame,
   fetchTileGameConfig,
   startTileGameSession,
   submitTileGameAction,
+  claimTileGame,
 } from '../lib/api'
 import { getGameComponentEntry } from '../games/registry'
 
@@ -13,9 +20,8 @@ function getErrorMessage(error, fallback) {
 }
 
 export default function TileGameModal({ tile, onClose, onSuccess }) {
-  const user = useGameStore((state) => state.user)
+  const user = useGameStore((s) => s.user)
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -24,16 +30,19 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
   const [sessionStatus, setSessionStatus] = useState('READY')
   const [bossState, setBossState] = useState(null)
   const [remainingClicks, setRemainingClicks] = useState(null)
-  const iframeRef = useRef(null)
+  const [busy, setBusy] = useState(false)
+  const [gameFinished, setGameFinished] = useState(false)
+
+  const onSuccessRef = useRef(onSuccess)
+  useEffect(() => { onSuccessRef.current = onSuccess }, [onSuccess])
 
   const gameEntry = useMemo(
     () => getGameComponentEntry(config?.game_type),
     [config?.game_type]
   )
-  const isIframeGame = Boolean(gameEntry?.mode === 'iframe' && gameEntry?.iframeSrc)
-  const GameComponent =
-    gameEntry?.mode === 'component' ? gameEntry?.component || null : null
+  const GameComponent = gameEntry?.mode === 'component' ? gameEntry?.component : null
 
+  // ─── 세션 부트스트랩 ─────────────────────────────────
   useEffect(() => {
     let cancelled = false
 
@@ -41,20 +50,16 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
       if (!tile?.grid_id) return
 
       setLoading(true)
-      setBusy(false)
       setError('')
       setMessage('')
       setConfig(null)
       setSessionId('')
-      setSessionStatus('READY')
-      setBossState(null)
-      setRemainingClicks(null)
+      setGameFinished(false)
 
       try {
-        const nextConfig = await fetchTileGameConfig(tile.grid_id)
+        const cfg = await fetchTileGameConfig(tile.grid_id)
         if (cancelled) return
-
-        setConfig(nextConfig)
+        setConfig(cfg)
 
         const started = await startTileGameSession(tile.grid_id, {
           userKey: user?.nickname || 'anonymous',
@@ -68,73 +73,56 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
           setBossState(started.boss_state)
           setRemainingClicks(started.boss_state.click_limit_per_user ?? null)
         }
-      } catch (requestError) {
-        if (cancelled) return
-        setError(getErrorMessage(requestError, 'Failed to initialize game session.'))
+      } catch (e) {
+        if (!cancelled) setError(getErrorMessage(e, '게임 세션 초기화 실패'))
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 
     bootstrap()
-
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [tile?.grid_id, user?.nickname])
 
-  const handleBasicResult = useCallback(async (result) => {
-    if (!tile?.grid_id || !sessionId || !config) return
-
-    setBusy(true)
-    setError('')
-    setMessage('')
-
+  // ─── 서버에 결과 기록 (백그라운드, 점령과 무관) ───────
+  const recordToServer = useCallback(async (result) => {
+    if (!sessionId || !tile?.grid_id) return
     try {
-      const action = await submitTileGameAction(tile.grid_id, {
+      await submitTileGameAction(tile.grid_id, {
         session_id: sessionId,
         action_type: 'submit_result',
-        success: Boolean(result?.success),
-        score: Number(result?.score || 0),
-        game_level: Number(result?.gameLevel || config.level || 1),
+        success: Boolean(result.success),
+        score: Number(result.score || 0),
+        game_level: Number(result.gameLevel || 1),
         user_key: user?.nickname || 'anonymous',
       })
-
-      setSessionStatus(action.session_status)
-
-      if (!action.success) {
-        setMessage('Game result submitted as failed. Try another tile.')
-        return
-      }
-
-      if (!action.can_claim) {
-        setMessage('Result received, but claim is not available.')
-        return
-      }
-
-      const claim = await claimTileGame(tile.grid_id, sessionId)
-      if (!claim.can_claim) {
-        setMessage('Claim rejected by server.')
-        return
-      }
-
-      setMessage('Claim approved. Occupying tile...')
-      onSuccess?.({
-        success: true,
-        gameLevel: Number(result?.gameLevel || config.level || 1),
-        score: Number(result?.score || 0),
-      })
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Failed to submit game result.'))
-    } finally {
-      setBusy(false)
+      await claimTileGame(tile.grid_id, sessionId)
+    } catch {
+      // 서버 기록 실패해도 점령 플로우에 영향 없음
     }
-  }, [config, onSuccess, sessionId, tile?.grid_id, user?.nickname])
+  }, [sessionId, tile?.grid_id, user?.nickname])
 
+  // ─── 기본 게임 결과 처리 ─────────────────────────────
+  const handleBasicResult = useCallback((result) => {
+    if (gameFinished) return
+    setGameFinished(true)
+
+    if (result?.success) {
+      setMessage('🎉 성공! 점령 중...')
+      recordToServer(result)
+      onSuccessRef.current?.({
+        success: true,
+        gameLevel: Number(result.gameLevel || config?.level || 1),
+        score: Number(result.score || 0),
+      })
+    } else {
+      setMessage('😢 아쉽게 실패했어요. 다시 도전해보세요!')
+    }
+  }, [config?.level, gameFinished, recordToServer])
+
+  // ─── 보스 게임 히트 ──────────────────────────────────
   const handleBossHit = useCallback(async () => {
-    if (!tile?.grid_id || !sessionId) return
+    if (!tile?.grid_id || !sessionId || busy) return
 
     setBusy(true)
     setError('')
@@ -154,125 +142,83 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
       }
 
       if (!action.success) {
-        setMessage(action.message || 'Boss hit failed.')
+        setMessage(action.message || '공격 실패')
         return
       }
 
-      if (!action.can_claim) {
-        setMessage('Boss hit applied. Keep attacking.')
-        return
+      if (action.can_claim) {
+        try { await claimTileGame(tile.grid_id, sessionId) } catch { /* ignore */ }
+        setMessage('🎉 보스 처치! 점령 중...')
+        onSuccessRef.current?.({
+          success: true,
+          gameLevel: Number(config?.level || 2),
+          score: Number(action.score || 0),
+        })
+      } else {
+        setMessage('공격 성공! 계속 때려!')
       }
-
-      const claim = await claimTileGame(tile.grid_id, sessionId)
-      if (!claim.can_claim) {
-        setMessage('Boss defeated but claim rejected.')
-        return
-      }
-
-      setMessage('Boss defeated. Occupying tile...')
-      onSuccess?.({
-        success: true,
-        gameLevel: Number(config?.level || 2),
-        score: Number(action.score || 0),
-      })
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Failed to apply boss hit.'))
+    } catch (e) {
+      setError(getErrorMessage(e, '공격 처리 실패'))
     } finally {
       setBusy(false)
     }
-  }, [config?.level, onSuccess, sessionId, tile?.grid_id, user?.nickname])
-
-  useEffect(() => {
-    if (!isIframeGame || !tile?.grid_id || !sessionId) return
-
-    const handleMessage = (event) => {
-      const iframeWindow = iframeRef.current?.contentWindow
-      if (!iframeWindow) return
-      if (event.source !== iframeWindow) return
-
-      const data = event.data
-      if (!data || data.type !== 'GAME_RESULT') return
-      if (busy) return
-
-      void handleBasicResult({
-        success: Boolean(data.success),
-        score: Number(data.score || 0),
-        gameLevel: Number(data.gameLevel || config?.level || 1),
-      })
-    }
-
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [busy, config?.level, handleBasicResult, isIframeGame, sessionId, tile?.grid_id])
+  }, [busy, config?.level, sessionId, tile?.grid_id, user?.nickname])
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+        {/* 헤더 */}
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <div>
-            <p className="text-sm font-semibold text-slate-800">Land Capture Game</p>
-            <p className="text-xs text-slate-500">{tile?.grid_id}</p>
+            <p className="text-sm font-bold text-slate-800">
+              {gameEntry?.title || '미니게임'}
+            </p>
+            <p className="text-[11px] text-slate-400">{tile?.grid_id}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
+            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 active:bg-slate-200"
           >
-            Close
+            닫기
           </button>
         </div>
 
+        {/* 로딩 */}
         {loading && (
-          <div className="p-5 text-sm text-slate-600">Loading game session...</div>
+          <div className="flex items-center gap-2 p-5 text-sm text-slate-500">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+            게임 준비 중...
+          </div>
         )}
 
+        {/* 에러 */}
         {!loading && error && (
           <div className="p-5 text-sm text-rose-600">{error}</div>
         )}
 
-        {!loading && !error && !isIframeGame && !GameComponent && (
+        {/* 게임 컴포넌트 없음 */}
+        {!loading && !error && !GameComponent && (
           <div className="p-5 text-sm text-rose-600">
-            No game component found for this tile.
+            이 타일의 게임을 불러올 수 없습니다.
           </div>
         )}
 
-        {!loading && !error && isIframeGame && (
-          <>
-            <div className="px-4 pt-3 text-xs font-medium text-slate-500">
-              {gameEntry?.title || config?.title || 'Game'}
-            </div>
-            <div className="p-4">
-              <iframe
-                ref={iframeRef}
-                title={gameEntry?.title || 'Basic Mini Game'}
-                src={gameEntry.iframeSrc}
-                className="h-[460px] w-full rounded-xl border border-slate-200"
-              />
-              <p className="mt-2 text-xs text-slate-500">
-                Finish the mini game to auto-submit result.
-              </p>
-            </div>
-          </>
+        {/* 게임 컴포넌트 렌더링 */}
+        {!loading && !error && GameComponent && (
+          <GameComponent
+            busy={busy}
+            config={config}
+            bossState={bossState}
+            remainingClicks={remainingClicks}
+            sessionStatus={sessionStatus}
+            onSubmitResult={handleBasicResult}
+            onBossHit={handleBossHit}
+          />
         )}
 
-        {!loading && !error && !isIframeGame && GameComponent && (
-          <>
-            <div className="px-4 pt-3 text-xs font-medium text-slate-500">
-              {gameEntry?.title || config?.title || 'Game'}
-            </div>
-            <GameComponent
-              busy={busy}
-              config={config}
-              bossState={bossState}
-              remainingClicks={remainingClicks}
-              sessionStatus={sessionStatus}
-              onSubmitResult={handleBasicResult}
-              onBossHit={handleBossHit}
-            />
-          </>
-        )}
-
+        {/* 결과 메시지 */}
         {message && (
-          <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
             {message}
           </div>
         )}

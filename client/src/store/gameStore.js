@@ -1,7 +1,7 @@
 /**
  * 게임 전역 상태 관리 (Zustand + persist)
  * ─────────────────────────────────────────
- * user를 localStorage에 영속하여 자동 로그인을 유지한다.
+ * user, demoMode를 localStorage에 영속한다.
  */
 
 import { create } from 'zustand'
@@ -22,10 +22,13 @@ const useGameStore = create(
 
       selectedTile: null,
       setSelectedTile: (selectedTile) => set({ selectedTile }),
+
+      demoMode: false,
+      setDemoMode: (demoMode) => set({ demoMode }),
     }),
     {
       name: 'campus-turf-war',
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({ user: state.user, demoMode: state.demoMode }),
     }
   )
 )
