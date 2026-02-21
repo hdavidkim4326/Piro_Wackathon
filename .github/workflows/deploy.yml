@@ -22,9 +22,14 @@ jobs:
       - name: Install & Build Client
         env:
           VITE_KAKAO_MAP_KEY: ${{ secrets.VITE_KAKAO_MAP_KEY }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: |
           if [ -z "$VITE_KAKAO_MAP_KEY" ]; then
             echo "VITE_KAKAO_MAP_KEY secret is not set"
+            exit 1
+          fi
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "VITE_API_BASE_URL secret is not set"
             exit 1
           fi
           cd client
