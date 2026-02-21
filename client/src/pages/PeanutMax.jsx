@@ -78,15 +78,15 @@ function formatError(error, fallback = K.requestFail) {
 function wsBadgeMeta(status) {
   switch (status) {
     case 'live':
-      return { label: K.wsLive, className: 'bg-emerald-500/20 text-emerald-100 border-emerald-300/30' }
+      return { label: K.wsLive, className: 'bg-[#ff922b]/20 text-[#d9480f] border-[#ff922b]/30' }
     case 'connecting':
-      return { label: K.wsConnecting, className: 'bg-amber-500/20 text-amber-100 border-amber-300/30' }
+      return { label: K.wsConnecting, className: 'bg-amber-100/50 text-amber-600 border-amber-300/30' }
     case 'error':
-      return { label: K.wsError, className: 'bg-rose-500/20 text-rose-100 border-rose-300/30' }
+      return { label: K.wsError, className: 'bg-rose-100/50 text-rose-600 border-rose-300/30' }
     case 'closed':
-      return { label: K.wsClosed, className: 'bg-slate-500/20 text-slate-100 border-slate-300/30' }
+      return { label: K.wsClosed, className: 'bg-slate-100/50 text-slate-500 border-slate-300/30' }
     default:
-      return { label: K.wsIdle, className: 'bg-slate-500/20 text-slate-100 border-slate-300/30' }
+      return { label: K.wsIdle, className: 'bg-slate-100/50 text-slate-500 border-slate-300/30' }
   }
 }
 
@@ -477,157 +477,155 @@ export default function PeanutMax({ open, tile, onClose, onCaptureSuccess }) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[93] overflow-hidden"
+          className="fixed inset-0 z-[93] flex items-center justify-center bg-black/40 backdrop-blur-sm sm:p-5"
+          style={{ fontFamily: "'Gowun Dodum', sans-serif" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(245,158,11,0.24),transparent_42%),radial-gradient(circle_at_82%_4%,rgba(251,113,133,0.2),transparent_34%),linear-gradient(180deg,#020617_0%,#020617_45%,#111827_100%)]" />
-
-          <motion.div
-            className="pointer-events-none absolute -top-24 -left-20 h-80 w-80 rounded-full bg-orange-500/25 blur-3xl"
-            animate={{ x: [0, 16, -12, 0], y: [0, -8, 10, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="pointer-events-none absolute -right-24 top-8 h-96 w-96 rounded-full bg-rose-500/20 blur-3xl"
-            animate={{ x: [0, -20, 12, 0], y: [0, 12, -6, 0] }}
-            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          />
-
-          <div className="relative z-10 flex h-full flex-col px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-[max(env(safe-area-inset-top),14px)] sm:px-8">
-            <div className="rounded-2xl border border-white/15 bg-slate-950/55 px-4 py-3 backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/95">{K.titleMission}</p>
-                  <h2 className="mt-1 truncate text-xl font-black text-white">{K.titleBoss}</h2>
-                  <p className="mt-1 truncate text-[11px] font-medium text-slate-300">
-                    {K.centerTile}: {centerGridId}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.09em] ${wsMeta.className}`}
-                  >
-                    {wsMeta.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/90"
-                  >
-                    {K.close}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-2xl border border-rose-300/20 bg-rose-950/35 p-4">
-              <div className="mb-2 flex items-center justify-between text-sm font-semibold text-rose-50">
-                <span>{K.bossHp}</span>
-                <span>
-                  {hp} / {maxHp}
-                </span>
-              </div>
-
-              <div className="h-4 overflow-hidden rounded-full bg-rose-950/75">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-orange-400 via-rose-400 to-red-500"
-                  animate={{ width: `${hpPercent}%` }}
-                  transition={{ type: 'spring', damping: 22, stiffness: 170 }}
-                />
-              </div>
-            </div>
-
+          <div className="relative flex h-full w-full max-w-[420px] flex-col overflow-hidden bg-[#fff9f0] shadow-2xl sm:max-h-[850px] sm:rounded-[36px]">
             <motion.div
-              key={`stage-${stageFxKey}`}
-              animate={{ x: [0, -8, 7, -5, 3, 0], y: [0, -2, 2, -1, 0] }}
-              transition={{ duration: 0.24, ease: 'easeOut' }}
-              className="relative mt-3 flex min-h-[290px] flex-1 items-center justify-center overflow-hidden rounded-3xl border border-amber-200/20 bg-slate-950/65 shadow-2xl"
-            >
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-[radial-gradient(ellipse_at_bottom,rgba(251,146,60,0.36),rgba(15,23,42,0)_72%)]" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.08),transparent_36%)]" />
+              className="pointer-events-none absolute -top-24 -left-20 z-0 h-80 w-80 rounded-full bg-[#ffd8a8]/40 blur-3xl"
+              animate={{ x: [0, 16, -12, 0], y: [0, -8, 10, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="pointer-events-none absolute -right-24 top-8 z-0 h-96 w-96 rounded-full bg-[#ffc078]/30 blur-3xl"
+              animate={{ x: [0, -20, 12, 0], y: [0, 12, -6, 0] }}
+              transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+            />
 
-              <motion.img
-                key={`peanut-${peanutImageSrc}-${hitFxKey}`}
-                src={peanutImageSrc}
-                alt="peanut-boss"
-                initial={{ scale: 1, rotate: 0, y: 0 }}
-                animate={{
-                  scale: [1, 0.92, 1.08, 1],
-                  rotate: [0, -4, 4, 0],
-                  y: [0, -6, 0],
-                }}
+            <div className="relative z-10 flex h-full flex-col px-5 pb-[max(env(safe-area-inset-bottom),28px)] pt-[max(env(safe-area-inset-top),56px)]">
+              <div className="rounded-[24px] border-2 border-[#ffe8cc] bg-white px-5 py-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-bold text-[#8d6e63]">{K.titleMission}</p>
+                    <h2 className="mt-1 truncate text-[22px] font-black text-[#5d4037]" style={{ fontFamily: "'MemomentKkukkukk', sans-serif", letterSpacing: "1px" }}>{K.titleBoss}</h2>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-3">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="rounded-xl bg-[#fff4e6] px-5 py-2.5 text-[14px] font-bold text-[#8d6e63] transition-colors hover:bg-[#ffe8cc] active:scale-95"
+                    >
+                      {K.close}
+                    </button>
+                    <span
+                      className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.09em] ${wsMeta.className}`}
+                    >
+                      {wsMeta.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-[24px] border-2 border-[#ffe8cc] bg-white p-5 shadow-sm">
+                <div className="mb-2 flex items-center justify-between text-[14px] font-bold text-[#8d6e63]">
+                  <span>{K.bossHp}</span>
+                  <span className="text-[#d9480f]" style={{ fontFamily: "'MemomentKkukkukk', sans-serif", fontSize: "18px" }}>
+                    {hp} / {maxHp}
+                  </span>
+                </div>
+
+                <div className="h-4 overflow-hidden rounded-full bg-[#fff4e6] border border-[#ffe8cc]">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-[#ffd8a8] to-[#ff922b]"
+                    animate={{ width: `${hpPercent}%` }}
+                    transition={{ type: 'spring', damping: 22, stiffness: 170 }}
+                  />
+                </div>
+              </div>
+
+              <motion.div
+                key={`stage-${stageFxKey}`}
+                animate={{ x: [0, -8, 7, -5, 3, 0], y: [0, -2, 2, -1, 0] }}
                 transition={{ duration: 0.24, ease: 'easeOut' }}
-                className={`${bossScaleByType(specialType)} object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,0.62)]`}
-              />
+                className="relative mt-3 flex min-h-[290px] flex-1 items-center justify-center overflow-hidden rounded-[32px] border-2 border-[#ffe8cc] bg-white shadow-md"
+              >
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[50%] bg-[radial-gradient(ellipse_at_bottom,rgba(255,216,168,0.5),rgba(255,255,255,0)_70%)]" />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(255,244,230,0.8),transparent_60%)]" />
 
-              <AnimatePresence>
-                {hitting && (
-                  <motion.div
-                    key={`flash-${hitFxKey}`}
-                    initial={{ opacity: 0.42, scale: 0.94 }}
-                    animate={{ opacity: 0, scale: 1.18 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.24 }}
-                    className="pointer-events-none absolute h-72 w-72 rounded-full bg-amber-100/25 mix-blend-screen blur-sm"
-                  />
-                )}
-              </AnimatePresence>
+                <motion.img
+                  key={`peanut-${peanutImageSrc}-${hitFxKey}`}
+                  src={peanutImageSrc}
+                  alt="peanut-boss"
+                  initial={{ scale: 1, rotate: 0, y: 0 }}
+                  animate={{
+                    scale: [1, 0.92, 1.08, 1],
+                    rotate: [0, -4, 4, 0],
+                    y: [0, -6, 0],
+                  }}
+                  transition={{ duration: 0.24, ease: 'easeOut' }}
+                  className={`${bossScaleByType(specialType)} object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,0.62)]`}
+                />
 
-              <AnimatePresence>
-                {impactRipples.map((ripple) => (
-                  <motion.div
-                    key={ripple.id}
-                    initial={{ opacity: 0.35, scale: 0.7 }}
-                    animate={{ opacity: 0, scale: 1.42 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.38, ease: 'easeOut' }}
-                    className="pointer-events-none absolute h-64 w-64 rounded-full border-4 border-amber-200/70"
-                  />
-                ))}
-              </AnimatePresence>
+                <AnimatePresence>
+                  {hitting && (
+                    <motion.div
+                      key={`flash-${hitFxKey}`}
+                      initial={{ opacity: 0.42, scale: 0.94 }}
+                      animate={{ opacity: 0, scale: 1.18 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.24 }}
+                      className="pointer-events-none absolute h-72 w-72 rounded-full bg-[#ff922b]/30 mix-blend-multiply blur-md"
+                    />
+                  )}
+                </AnimatePresence>
 
-              <AnimatePresence>
-                {hitBursts.map((burst) => (
-                  <motion.div
-                    key={burst.id}
-                    initial={{ opacity: 0, y: 6, scale: 0.78, x: burst.offset }}
-                    animate={{ opacity: 1, y: -24, scale: 1.08, x: burst.offset }}
-                    exit={{ opacity: 0, y: -52, scale: 0.94, x: burst.offset }}
-                    transition={{ duration: 0.52, ease: 'easeOut' }}
-                    className="pointer-events-none absolute left-1/2 top-9 -translate-x-1/2 rounded-full bg-rose-500/95 px-2.5 py-0.5 text-sm font-black text-white shadow-lg shadow-rose-900/50"
-                  >
-                    -{burst.damage}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
+                <AnimatePresence>
+                  {impactRipples.map((ripple) => (
+                    <motion.div
+                      key={ripple.id}
+                      initial={{ opacity: 0.35, scale: 0.7 }}
+                      animate={{ opacity: 0, scale: 1.42 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.38, ease: 'easeOut' }}
+                      className="pointer-events-none absolute h-64 w-64 rounded-full border-4 border-[#ff922b]/50"
+                    />
+                  ))}
+                </AnimatePresence>
 
-            <div className="mt-3 grid grid-cols-3 gap-2.5">
-              <div className="rounded-xl border border-slate-700 bg-slate-900/75 px-3 py-2 text-xs text-slate-100">
-                {K.zoneType}: <span className="font-bold">{specialType}</span>
+                <AnimatePresence>
+                  {hitBursts.map((burst) => (
+                    <motion.div
+                      key={burst.id}
+                      initial={{ opacity: 0, y: 6, scale: 0.78, x: burst.offset }}
+                      animate={{ opacity: 1, y: -24, scale: 1.08, x: burst.offset }}
+                      exit={{ opacity: 0, y: -52, scale: 0.94, x: burst.offset }}
+                      transition={{ duration: 0.52, ease: 'easeOut' }}
+                      className="pointer-events-none absolute left-1/2 top-9 -translate-x-1/2 rounded-full bg-rose-500/95 px-2.5 py-0.5 text-sm font-black text-white shadow-lg shadow-rose-900/50"
+                    >
+                      -{burst.damage}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-[16px] border border-[#ffe8cc] bg-white px-3 py-2 text-center shadow-sm">
+                  <div className="text-[11px] font-medium text-[#adb5bd]">{K.zoneType}</div>
+                  <div className="mt-0.5 text-[14px] font-bold text-[#5d4037]">{specialType}</div>
+                </div>
+                <div className="rounded-[16px] border border-[#ffe8cc] bg-white px-3 py-2 text-center shadow-sm">
+                  <div className="text-[11px] font-medium text-[#adb5bd]">{K.clicksLeft}</div>
+                  <div className="mt-0.5 text-[20px] font-black text-[#d9480f]" style={{ fontFamily: "'MemomentKkukkukk', sans-serif" }}>{remainingClicks == null ? '-' : remainingClicks}</div>
+                </div>
               </div>
-              <div className="rounded-xl border border-slate-700 bg-slate-900/75 px-3 py-2 text-xs text-slate-100">
-                {K.session}: <span className="font-bold">{sessionLabel(sessionStatus)}</span>
-              </div>
-              <div className="rounded-xl border border-slate-700 bg-slate-900/75 px-3 py-2 text-xs text-slate-100">
-                {K.clicksLeft}: <span className="font-bold">{remainingClicks == null ? '-' : remainingClicks}</span>
-              </div>
+
+              <p className="mt-4 min-h-[22px] text-center text-[15px] font-bold text-[#8d6e63] drop-shadow-sm">{message || K.coopHint}</p>
+
+              <motion.button
+                type="button"
+                onClick={handleAttack}
+                disabled={!canAttack}
+                whileTap={canAttack ? { scale: 0.96 } : undefined}
+                className="mt-4 w-full rounded-[24px] bg-gradient-to-b from-[#ffd8a8] to-[#ff922b] px-4 py-6 text-[26px] font-black text-white shadow-[0_8px_20px_rgba(235,184,101,0.5)] border-b-[6px] border-[#d9480f]/50 disabled:cursor-not-allowed disabled:opacity-45 disabled:border-b-0 active:translate-y-1 active:border-b-0"
+                style={{ fontFamily: "'MemomentKkukkukk', sans-serif", letterSpacing: "2px" }}
+              >
+                {loading ? K.loadingMission : isDefeated ? K.defeated : hitting ? K.hitting : K.tapAttack}
+              </motion.button>
             </div>
-
-            <p className="mt-3 min-h-[22px] text-xs font-medium text-amber-100/95">{message || K.coopHint}</p>
-
-            <motion.button
-              type="button"
-              onClick={handleAttack}
-              disabled={!canAttack}
-              whileTap={canAttack ? { scale: 0.98 } : undefined}
-              className="mt-3 w-full rounded-2xl bg-gradient-to-r from-orange-500 via-rose-500 to-red-600 px-4 py-4 text-base font-black text-white shadow-xl shadow-rose-950/60 disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {loading ? K.loadingMission : isDefeated ? K.defeated : hitting ? K.hitting : K.tapAttack}
-            </motion.button>
           </div>
         </motion.div>
       )}
