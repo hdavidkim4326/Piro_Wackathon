@@ -10,33 +10,35 @@ const LNG_STEP = 0.00034
 const MAX_VISIBLE_TILES = 1200
 
 const UNIV_COLORS = {
-  서울대학교: { fill: 'rgba(59, 130, 246, 0.40)', stroke: '#3b82f6' },
-  연세대학교: { fill: 'rgba(56, 189, 248, 0.40)', stroke: '#38bdf8' },
-  고려대학교: { fill: 'rgba(239, 68, 68, 0.40)', stroke: '#ef4444' },
-  default: { fill: 'rgba(107, 114, 128, 0.05)', stroke: '#9ca3af' },
+  서울대학교: { fill: '#3b82f6', stroke: '#2563eb', opacity: 0.4 },
+  연세대학교: { fill: '#38bdf8', stroke: '#0ea5e9', opacity: 0.4 },
+  고려대학교: { fill: '#ef4444', stroke: '#dc2626', opacity: 0.4 },
+  우리대학교: { fill: '#a855f7', stroke: '#7c3aed', opacity: 0.4 },
+  _unknown: { fill: '#f97316', stroke: '#ea580c', opacity: 0.4 },
+  _empty: { fill: '#cbd5e1', stroke: '#94a3b8', opacity: 0.04 },
 }
 
 const SPECIAL_CENTER_STYLES = {
-  '3x3': { stroke: '#f59e0b', fill: 'rgba(245, 158, 11, 0.18)' },
-  '5x5': { stroke: '#ef4444', fill: 'rgba(239, 68, 68, 0.20)' },
-  default: { stroke: '#f59e0b', fill: 'rgba(245, 158, 11, 0.18)' },
+  '3x3': { stroke: '#f59e0b', fill: '#f59e0b', strokeOpacity: 0.95, fillOpacity: 0.22, strokeWeight: 3 },
+  '5x5': { stroke: '#ef4444', fill: '#ef4444', strokeOpacity: 0.95, fillOpacity: 0.24, strokeWeight: 3 },
+  default: { stroke: '#f59e0b', fill: '#f59e0b', strokeOpacity: 0.95, fillOpacity: 0.22, strokeWeight: 3 },
 }
 
 const SPECIAL_ZONE_STYLES = {
-  '3x3': { stroke: '#f59e0b', fill: 'rgba(245, 158, 11, 0.10)' },
-  '5x5': { stroke: '#ef4444', fill: 'rgba(239, 68, 68, 0.12)' },
-  default: { stroke: '#f59e0b', fill: 'rgba(245, 158, 11, 0.10)' },
+  '3x3': { stroke: '#f59e0b', fill: '#f59e0b', strokeOpacity: 0.75, fillOpacity: 0.12, strokeWeight: 2 },
+  '5x5': { stroke: '#ef4444', fill: '#ef4444', strokeOpacity: 0.75, fillOpacity: 0.14, strokeWeight: 2 },
+  default: { stroke: '#f59e0b', fill: '#f59e0b', strokeOpacity: 0.75, fillOpacity: 0.12, strokeWeight: 2 },
 }
 
 function getUnivColor(univ) {
-  if (!univ) return UNIV_COLORS.default
-  return UNIV_COLORS[univ] || UNIV_COLORS.default
+  if (!univ) return UNIV_COLORS._empty
+  const trimmed = String(univ).trim()
+  return UNIV_COLORS[trimmed] || UNIV_COLORS._unknown
 }
 
 function buildViewportTiles(bounds) {
   const sw = bounds.getSouthWest()
   const ne = bounds.getNorthEast()
-
   const minLat = sw.getLat()
   const maxLat = ne.getLat()
   const minLng = sw.getLng()
@@ -44,13 +46,11 @@ function buildViewportTiles(bounds) {
 
   const rowStart = Math.floor(minLat / LAT_STEP)
   const rowEnd = Math.floor(maxLat / LAT_STEP)
-
   const tiles = []
 
   for (let row = rowStart; row <= rowEnd; row += 1) {
     const south = row * LAT_STEP
     const north = south + LAT_STEP
-
     const colStart = Math.floor(minLng / LNG_STEP)
     const colEnd = Math.floor(maxLng / LNG_STEP)
 
@@ -86,8 +86,9 @@ export default function MapView({ center }) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const overlaysRef = useRef([])
-  const idleHandlerRef = useRef(null)
   const markerRef = useRef(null)
+  const idleHandlerRef = useRef(null)
+  const drawPolygonsRef = useRef(null)
 
   const [mapReady, setMapReady] = useState(false)
   const [tileCount, setTileCount] = useState(0)
@@ -108,11 +109,16 @@ export default function MapView({ center }) {
     if (!bounds) return
 
     const baseGrid = buildViewportTiles(bounds)
+    const serverMap = new Map()
+    if (serverTiles && serverTiles.length > 0) {
+      serverTiles.forEach((tile) => {
+        serverMap.set(tile.grid_id, tile)
+      })
+    }
 
     const mergedTiles = baseGrid.map((baseTile) => {
-      const realTile = serverTiles?.find((tile) => tile.grid_id === baseTile.grid_id)
+      const realTile = serverMap.get(baseTile.grid_id)
       if (!realTile) return baseTile
-
       return {
         ...baseTile,
         owner_univ: realTile.owner_univ,
@@ -141,31 +147,39 @@ export default function MapView({ center }) {
         (point) => new window.kakao.maps.LatLng(point.lat, point.lng)
       )
 
-      const strokeWeight = isSpecialCenter ? 3 : inSpecialZone ? 2 : tile.owner_univ ? 2 : 1
+      const strokeWeight = isSpecialCenter
+        ? specialCenterStyle.strokeWeight
+        : inSpecialZone
+          ? specialZoneStyle.strokeWeight
+          : tile.owner_univ
+            ? 2
+            : 1
+
       const strokeColor = isSpecialCenter
         ? specialCenterStyle.stroke
         : inSpecialZone
           ? specialZoneStyle.stroke
           : ownerColor.stroke
+
       const strokeOpacity = isSpecialCenter
-        ? 0.95
+        ? specialCenterStyle.strokeOpacity
         : inSpecialZone
-          ? 0.75
+          ? specialZoneStyle.strokeOpacity
           : tile.owner_univ
             ? 0.9
-            : 0.4
+            : 0.3
+
       const fillColor = isSpecialCenter
         ? specialCenterStyle.fill
         : inSpecialZone
           ? specialZoneStyle.fill
           : ownerColor.fill
+
       const fillOpacity = isSpecialCenter
-        ? 0.9
+        ? specialCenterStyle.fillOpacity
         : inSpecialZone
-          ? 1
-          : tile.owner_univ
-            ? 0.8
-            : 1
+          ? specialZoneStyle.fillOpacity
+          : ownerColor.opacity
 
       const polygon = new window.kakao.maps.Polygon({
         map: mapRef.current,
@@ -206,6 +220,10 @@ export default function MapView({ center }) {
     setTileCount(mergedTiles.length)
   }, [clearOverlays, serverTiles, setSelectedTile])
 
+  useEffect(() => {
+    drawPolygonsRef.current = drawPolygons
+  }, [drawPolygons])
+
   const handleIdle = useCallback(() => {
     if (!mapRef.current) return
 
@@ -222,8 +240,8 @@ export default function MapView({ center }) {
       maxLng: ne.getLng(),
     })
 
-    drawPolygons()
-  }, [drawPolygons, setMapBounds])
+    drawPolygonsRef.current?.()
+  }, [setMapBounds])
 
   useEffect(() => {
     if (!mapReady) return
@@ -257,21 +275,23 @@ export default function MapView({ center }) {
       })
     }, 100)
 
-    return () => window.clearInterval(checkKakaoReady)
+    return () => {
+      window.clearInterval(checkKakaoReady)
+    }
   }, [center.lat, center.lng, handleIdle])
 
   useEffect(() => {
-    if (!mapRef.current || !window.kakao?.maps) return
+    if (!mapRef.current || !window.kakao?.maps || !center) return
 
     const currentCenter = mapRef.current.getCenter()
-    const movedLat = Math.abs(currentCenter.getLat() - center.lat)
-    const movedLng = Math.abs(currentCenter.getLng() - center.lng)
-    if (movedLat <= 0.0001 && movedLng <= 0.0001) return
+    const dLat = Math.abs(currentCenter.getLat() - center.lat)
+    const dLng = Math.abs(currentCenter.getLng() - center.lng)
+    if (dLat < 0.0001 && dLng < 0.0001) return
 
     const position = new window.kakao.maps.LatLng(center.lat, center.lng)
-    mapRef.current.setCenter(position)
+    mapRef.current.panTo(position)
     markerRef.current?.setPosition(position)
-  }, [center.lat, center.lng])
+  }, [center?.lat, center?.lng])
 
   useEffect(() => {
     return () => {
