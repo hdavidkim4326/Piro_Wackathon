@@ -32,3 +32,13 @@ createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </StrictMode>
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+    navigator.serviceWorker.register(`${normalizedBase}sw.js`).catch((error) => {
+      console.error('[PWA] service worker registration failed:', error)
+    })
+  })
+}
