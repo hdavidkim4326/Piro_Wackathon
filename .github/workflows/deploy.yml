@@ -2,7 +2,7 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main ] # main 브랜치에 push될 때 실행
+    branches: [ main, deploy ] # main/deploy 브랜치에 push될 때 실행
 
 jobs:
   deploy:
@@ -20,7 +20,18 @@ jobs:
           cache-dependency-path: client/package-lock.json # 캐시 기준 파일 경로
 
       - name: Install & Build Client
+        env:
+          VITE_KAKAO_MAP_KEY: ${{ secrets.VITE_KAKAO_MAP_KEY }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: |
+          if [ -z "$VITE_KAKAO_MAP_KEY" ]; then
+            echo "VITE_KAKAO_MAP_KEY secret is not set"
+            exit 1
+          fi
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "VITE_API_BASE_URL secret is not set"
+            exit 1
+          fi
           cd client
           npm install
           npm run build
@@ -49,5 +60,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/Piro_Wackathon
-            git pull origin main
+            git pull origin ${{ github.ref_name }}
             docker compose up -d --build backend postgres
