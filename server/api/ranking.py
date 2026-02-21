@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from core.mission import get_default_mission
 from database import get_db
 from models import Organization, TerritoryStatus, TerritoryStatusEnum
 from schemas import RankingResponse
@@ -36,17 +37,21 @@ def get_ranking(
       ORDER BY tile_count DESC
       LIMIT :limit
     """
+    mission = get_default_mission(db)
+
     stmt = (
         select(
             Organization.org_name,
-            func.count(TerritoryStatus.territory_id).label("tile_count"),
+            func.count(func.distinct(TerritoryStatus.territory_id)).label("tile_count"),
         )
         .join(Organization, TerritoryStatus.org_id == Organization.org_id)
         .where(TerritoryStatus.status == TerritoryStatusEnum.OCCUPIED)
         .group_by(Organization.org_name)
-        .order_by(func.count(TerritoryStatus.territory_id).desc())
+        .order_by(func.count(func.distinct(TerritoryStatus.territory_id)).desc())
         .limit(limit)
     )
+    if mission:
+        stmt = stmt.where(TerritoryStatus.mission_id == mission.mission_id)
 
     rows = db.execute(stmt).all()
 

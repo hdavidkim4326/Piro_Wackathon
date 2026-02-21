@@ -21,8 +21,9 @@ export async function fetchTiles({ minLat, maxLat, minLng, maxLng }) {
   return res.data
 }
 
-export async function occupyTile({ gridId, university, level = 1 }) {
-  const res = await api.post('/occupy', { grid_id: gridId, university, level })
+export async function occupyTile({ gridId, university, level = 1, userId = null }) {
+  const headers = userId ? { 'X-User-Id': String(userId) } : {}
+  const res = await api.post('/occupy', { grid_id: gridId, university, level }, { headers })
   return res.data
 }
 
@@ -52,6 +53,13 @@ export async function signUpUser({ email, nickname, password }) {
 
 export async function loginUser({ email, password }) {
   const res = await api.post('/login', { email, password })
+  return res.data
+}
+
+export async function fetchMyStats(userId) {
+  const res = await api.get('/users/me/stats', {
+    headers: { 'X-User-Id': String(userId) },
+  })
   return res.data
 }
 

@@ -1,18 +1,18 @@
-let timeLeft = 10;
+﻿let timeLeft = 10;
 let score = 0;
 const GOAL_SCORE = 7;
 
 let isGameRunning = false;
 let timerId;
 
-// 🎨 색상 조합 족보 데이터
+// ?렓 ?됱긽 議고빀 議깅낫 ?곗씠??
 const RECIPES = [
-    { name: "보라색 (Purple)", colors: ["red", "blue"], hex: "#b197fc" },
-    { name: "주황색 (Orange)", colors: ["red", "yellow"], hex: "#ff922b" },
-    { name: "초록색 (Green)", colors: ["blue", "yellow"], hex: "#51cf66" }
+    { name: "蹂대씪??(Purple)", colors: ["red", "blue"], hex: "#b197fc" },
+    { name: "二쇳솴??(Orange)", colors: ["red", "yellow"], hex: "#ff922b" },
+    { name: "珥덈줉??(Green)", colors: ["blue", "yellow"], hex: "#51cf66" }
 ];
 
-// 실제 색상 코드 매핑 (트레이 표시용)
+// ?ㅼ젣 ?됱긽 肄붾뱶 留ㅽ븨 (?몃젅???쒖떆??
 const COLOR_CODES = {
     "red": "#ff6b6b",
     "blue": "#339af0",
@@ -20,13 +20,13 @@ const COLOR_CODES = {
 };
 
 let currentTarget = null;
-let selectedColors = []; // 유저가 선택한 색상 2개가 담길 배열
+let selectedColors = []; // ?좎?媛 ?좏깮???됱긽 2媛쒓? ?닿만 諛곗뿴
 
-// 🔥 연속 출제 방지를 위한 기억 장치
+// ?뵦 ?곗냽 異쒖젣 諛⑹?瑜??꾪븳 湲곗뼲 ?μ튂
 let previousTargetName = "";
 let consecutiveTargetCount = 0;
 
-// 화면 요소 가져오기
+// ?붾㈃ ?붿냼 媛?몄삤湲?
 const timeDisplay = document.getElementById('time-left');
 const scoreDisplay = document.getElementById('current-score');
 const targetBox = document.getElementById('target-box');
@@ -40,13 +40,13 @@ const startBtn = document.getElementById('start-btn');
 const readyCover = document.getElementById('ready-cover');
 
 // =========================================
-// 1. 게임 시작 및 타이머
+// 1. 寃뚯엫 ?쒖옉 諛???대㉧
 // =========================================
 
 startBtn.addEventListener('click', () => {
-    timeLeft = 10; // 초기화
+    timeLeft = 10; // 珥덇린??
     score = 0;
-    previousTargetName = ""; // 뽑기 기억 장치 초기화
+    previousTargetName = ""; // 戮묎린 湲곗뼲 ?μ튂 珥덇린??
     consecutiveTargetCount = 0;
     isGameRunning = true;
 
@@ -64,44 +64,44 @@ function countDown() {
     timeDisplay.textContent = timeLeft;
 
     if (timeLeft <= 0) {
-        endGame(false); // 시간 초과 실패
+        endGame(false); // ?쒓컙 珥덇낵 ?ㅽ뙣
     }
 }
 
-// 다음 문제 출제 (연속 출제 방지 로직 적용!)
+// ?ㅼ쓬 臾몄젣 異쒖젣 (?곗냽 異쒖젣 諛⑹? 濡쒖쭅 ?곸슜!)
 function setNextTarget() {
     clearTray();
 
     let randomIdx;
     let nextTarget;
 
-    // 🔥 같은 색상이 3번 연속으로 나오려 하면 다시 뽑기! (do-while 반복문)
+    // ?뵦 媛숈? ?됱긽??3踰??곗냽?쇰줈 ?섏삤???섎㈃ ?ㅼ떆 戮묎린! (do-while 諛섎났臾?
     do {
         randomIdx = Math.floor(Math.random() * RECIPES.length);
         nextTarget = RECIPES[randomIdx];
     } while (nextTarget.name === previousTargetName && consecutiveTargetCount >= 2);
 
-    // 연속 카운트 기록하기
+    // ?곗냽 移댁슫??湲곕줉?섍린
     if (nextTarget.name === previousTargetName) {
-        consecutiveTargetCount++; // 또 같은 거 나왔네? 카운트 증가
+        consecutiveTargetCount++; // ??媛숈? 嫄??섏솕?? 移댁슫??利앷?
     } else {
         previousTargetName = nextTarget.name;
-        consecutiveTargetCount = 1; // 새로운 거 나왔으니 카운트 1로 리셋
+        consecutiveTargetCount = 1; // ?덈줈??嫄??섏솕?쇰땲 移댁슫??1濡?由ъ뀑
     }
 
     currentTarget = nextTarget;
 
     targetBox.style.backgroundColor = currentTarget.hex;
     targetName.textContent = currentTarget.name;
-    feedbackText.textContent = "어떤 색을 섞어야 할까요?";
+    feedbackText.textContent = "?대뼡 ?됱쓣 ?욎뼱???좉퉴??";
     feedbackText.style.color = "#495057";
 }
 
 // =========================================
-// 2. 색상 선택 및 조합 로직
+// 2. ?됱긽 ?좏깮 諛?議고빀 濡쒖쭅
 // =========================================
 
-// 팔레트 버튼 클릭 이벤트
+// ?붾젅??踰꾪듉 ?대┃ ?대깽??
 colorBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         if (!isGameRunning || selectedColors.length >= 2) return;
@@ -110,16 +110,16 @@ colorBtns.forEach(btn => {
         selectedColors.push(pickedColor);
         updateTrayUI();
 
-        // 2개가 꽉 차면 정답 확인!
+        // 2媛쒓? 苑?李⑤㈃ ?뺣떟 ?뺤씤!
         if (selectedColors.length === 2) {
             checkMix();
         }
     });
 });
 
-// 트레이(빈칸) 시각적 업데이트
+// ?몃젅??鍮덉뭏) ?쒓컖???낅뜲?댄듃
 function updateTrayUI() {
-    // 첫 번째 슬롯
+    // 泥?踰덉㎏ ?щ’
     if (selectedColors[0]) {
         slot1.style.backgroundColor = COLOR_CODES[selectedColors[0]];
         slot1.style.border = "3px solid white";
@@ -128,7 +128,7 @@ function updateTrayUI() {
         slot1.style.border = "3px dashed #ced4da";
     }
 
-    // 두 번째 슬롯
+    // ??踰덉㎏ ?щ’
     if (selectedColors[1]) {
         slot2.style.backgroundColor = COLOR_CODES[selectedColors[1]];
         slot2.style.border = "3px solid white";
@@ -138,7 +138,7 @@ function updateTrayUI() {
     }
 }
 
-// 트레이 비우기 (리셋 버튼용)
+// ?몃젅??鍮꾩슦湲?(由ъ뀑 踰꾪듉??
 resetBtn.addEventListener('click', clearTray);
 
 function clearTray() {
@@ -147,36 +147,36 @@ function clearTray() {
 }
 
 // =========================================
-// 3. 정답 판정
+// 3. ?뺣떟 ?먯젙
 // =========================================
 
 function checkMix() {
-    // 순서 상관없이 비교하기 위해 정렬 후 문자로 합침 (예: "blue,red" === "blue,red")
+    // ?쒖꽌 ?곴??놁씠 鍮꾧탳?섍린 ?꾪빐 ?뺣젹 ??臾몄옄濡??⑹묠 (?? "blue,red" === "blue,red")
     const userMix = [...selectedColors].sort().join(',');
     const correctMix = [...currentTarget.colors].sort().join(',');
 
     if (userMix === correctMix) {
-        // 정답!
+        // ?뺣떟!
         score++;
         scoreDisplay.textContent = score;
-        feedbackText.textContent = "✨ 정답입니다!";
+        feedbackText.textContent = "???뺣떟?낅땲??";
         feedbackText.style.color = "#20c997";
 
         if (score >= GOAL_SCORE) {
-            setTimeout(() => endGame(true), 300); // 승리!
+            setTimeout(() => endGame(true), 300); // ?밸━!
         } else {
-            setTimeout(setNextTarget, 400); // 0.4초 뒤 다음 문제
+            setTimeout(setNextTarget, 400); // 0.4珥????ㅼ쓬 臾몄젣
         }
     } else {
-        // 오답!
-        feedbackText.textContent = "❌ 틀렸습니다! 다시 섞어보세요.";
+        // ?ㅻ떟!
+        feedbackText.textContent = "????몄뒿?덈떎! ?ㅼ떆 ?욎뼱蹂댁꽭??";
         feedbackText.style.color = "#ff6b6b";
-        setTimeout(clearTray, 600); // 0.6초 뒤에 트레이 자동 비워줌
+        setTimeout(clearTray, 600); // 0.6珥??ㅼ뿉 ?몃젅???먮룞 鍮꾩썙以?
     }
 }
 
 // =========================================
-// 4. 게임 종료 및 결과 전송
+// 4. 寃뚯엫 醫낅즺 諛?寃곌낵 ?꾩넚
 // =========================================
 
 function endGame(isSuccess) {
@@ -184,24 +184,26 @@ function endGame(isSuccess) {
     clearInterval(timerId);
 
     if (isSuccess) {
-        alert(`🎉 천재적인 색채 감각! 영토를 점령했습니다!`);
+        alert(`?럦 泥쒖옱?곸씤 ?됱콈 媛먭컖! ?곹넗瑜??먮졊?덉뒿?덈떎!`);
     } else {
-        alert(`💦 아쉽게 실패했습니다. 다시 도전해보세요! (달성: ${score}/${GOAL_SCORE})`);
+        alert(`?뮚 ?꾩돺寃??ㅽ뙣?덉뒿?덈떎. ?ㅼ떆 ?꾩쟾?대낫?몄슂! (?ъ꽦: ${score}/${GOAL_SCORE})`);
     }
 
     readyCover.style.display = 'flex';
-    startBtn.textContent = "다시 하기";
+    startBtn.textContent = "?ㅼ떆 ?섍린";
 
-    // 1. 보낼 데이터를 변수로 예쁘게 포장합니다.
-    const resultData = {
-        type: 'GAME_RESULT',
-        gameId: 9,
-        success: isSuccess
-    };
-
-    // 2. F12 콘솔창에 기록을 남깁니다! (내 눈으로 확인용)
-    console.log("📨 React로 날아갈 쪽지 내용:", resultData);
-
-    // 3. 부모 창으로 쪽지를 진짜 던집니다.
-    window.parent.postMessage(resultData, '*');
+    // 1. 蹂대궪 ?곗씠?곕? 蹂?섎줈 ?덉걯寃??ъ옣?⑸땲??
+        if (window.CampusTurfGameBridge && typeof window.CampusTurfGameBridge.postResult === 'function') {
+        window.CampusTurfGameBridge.postResult({
+            type: 'GAME_RESULT',
+            gameId: 9,
+            success: isSuccess
+        });
+    } else {
+        window.parent.postMessage({
+            type: 'GAME_RESULT',
+            gameId: 9,
+            success: isSuccess
+        }, '*');
+    }
 }

@@ -1,27 +1,27 @@
-let chances = 7;
+﻿let chances = 7;
 let successCount = 0;
-const GOAL_SUCCESS = 4; // 4번 성공 시 점령
+const GOAL_SUCCESS = 4; // 4踰??깃났 ???먮졊
 
 let isMoving = false;
 let barPosition = 0; // 0 ~ 100 (%)
-let barDirection = 1; // 1: 오른쪽, -1: 왼쪽
-let speed = 1.5; // 바 이동 속도
+let barDirection = 1; // 1: ?ㅻⅨ履? -1: ?쇱そ
+let speed = 1.5; // 諛??대룞 ?띾룄
 let animationId;
 
-// 화면 요소 가져오기
+// ?붾㈃ ?붿냼 媛?몄삤湲?
 const chancesDisplay = document.getElementById('chances-left');
 const successDisplay = document.getElementById('success-count');
 const movingBar = document.getElementById('moving-bar');
 const actionBtn = document.getElementById('action-btn');
 const startBtn = document.getElementById('start-btn');
 
-// 🎬 바를 좌우로 부드럽게 움직이는 애니메이션 함수
+// ?렗 諛붾? 醫뚯슦濡?遺?쒕읇寃??吏곸씠???좊땲硫붿씠???⑥닔
 function moveBar() {
     if (!isMoving) return;
 
     barPosition += speed * barDirection;
 
-    // 양쪽 끝에 닿으면 방향 반전
+    // ?묒そ ?앹뿉 ?우쑝硫?諛⑺뼢 諛섏쟾
     if (barPosition >= 98) {
         barPosition = 98;
         barDirection = -1;
@@ -31,61 +31,61 @@ function moveBar() {
     }
 
     movingBar.style.left = barPosition + '%';
-    animationId = requestAnimationFrame(moveBar); // 모니터 주사율에 맞춰 부드럽게 호출
+    animationId = requestAnimationFrame(moveBar); // 紐⑤땲??二쇱궗?⑥뿉 留욎떠 遺?쒕읇寃??몄텧
 }
 
-// 🕹️ 라운드 시작 함수
+// ?빘截??쇱슫???쒖옉 ?⑥닔
 function startRound() {
     barPosition = 0;
     barDirection = 1;
     movingBar.style.left = '0%';
-    movingBar.style.backgroundColor = '#ff6b6b'; // 빨간색으로 초기화
+    movingBar.style.backgroundColor = '#ff6b6b'; // 鍮④컙?됱쑝濡?珥덇린??
 
     isMoving = true;
     actionBtn.disabled = false;
     moveBar();
 }
 
-// [게임 시작] 버튼 클릭
+// [寃뚯엫 ?쒖옉] 踰꾪듉 ?대┃
 startBtn.addEventListener('click', () => {
     chances = 7;
     successCount = 0;
-    speed = 1.5; // 초기 속도
+    speed = 1.5; // 珥덇린 ?띾룄
     chancesDisplay.textContent = chances;
     successDisplay.textContent = successCount;
 
     startBtn.style.display = 'none';
-    actionBtn.textContent = "멈춤!";
+    actionBtn.textContent = "硫덉땄!";
 
     startRound();
 });
 
-// [멈춤!] 버튼 클릭
+// [硫덉땄!] 踰꾪듉 ?대┃
 actionBtn.addEventListener('click', () => {
     if (!isMoving) return;
 
-    // 1. 움직임 멈추기
+    // 1. ?吏곸엫 硫덉텛湲?
     isMoving = false;
     cancelAnimationFrame(animationId);
     actionBtn.disabled = true;
 
-    // 2. 타겟 존(35% ~ 65%) 안에 있는지 판별
+    // 2. ?寃?議?35% ~ 65%) ?덉뿉 ?덈뒗吏 ?먮퀎
     const minSuccess = 35;
     const maxSuccess = 65;
 
     if (barPosition >= minSuccess && barPosition <= maxSuccess) {
         successCount++;
         successDisplay.textContent = successCount;
-        movingBar.style.backgroundColor = '#20c997'; // 성공 시 초록색으로 변경!
-        speed += 0.7; // 성공할 때마다 게이지 속도가 살짝 빨라짐 (긴장감 UP!)
+        movingBar.style.backgroundColor = '#20c997'; // ?깃났 ??珥덈줉?됱쑝濡?蹂寃?
+        speed += 0.7; // ?깃났???뚮쭏??寃뚯씠吏 ?띾룄媛 ?댁쭩 鍮⑤씪吏?(湲댁옣媛?UP!)
     } else {
-        movingBar.style.backgroundColor = '#495057'; // 실패 시 어두운 회색으로 변경
+        movingBar.style.backgroundColor = '#495057'; // ?ㅽ뙣 ???대몢???뚯깋?쇰줈 蹂寃?
     }
 
     chances--;
     chancesDisplay.textContent = chances;
 
-    // 3. 잠깐(0.8초) 멈췄다가 다음 라운드 진행
+    // 3. ?좉퉸(0.8珥? 硫덉톬?ㅺ? ?ㅼ쓬 ?쇱슫??吏꾪뻾
     setTimeout(() => {
         if (chances > 0) {
             startRound();
@@ -95,30 +95,32 @@ actionBtn.addEventListener('click', () => {
     }, 800);
 });
 
-// 🏁 게임 종료 처리
+// ?뢾 寃뚯엫 醫낅즺 泥섎━
 function endGame() {
-    actionBtn.textContent = "종료!";
+    actionBtn.textContent = "醫낅즺!";
     startBtn.style.display = 'inline-block';
-    startBtn.textContent = "다시 하기";
+    startBtn.textContent = "?ㅼ떆 ?섍린";
 
     const isSuccess = successCount >= GOAL_SUCCESS;
 
     if (isSuccess) {
-        alert(`🎉 성공! 7번 중 ${successCount}번 정확히 맞췄습니다!`);
+        alert(`?럦 ?깃났! 7踰?以?${successCount}踰??뺥솗??留욎톬?듬땲??`);
     } else {
-        alert(`💦 아쉽네요! ${successCount}번 성공에 그쳤습니다.`);
+        alert(`?뮚 ?꾩돺?ㅼ슂! ${successCount}踰??깃났??洹몄낀?듬땲??`);
     }
 
-    // 1. 보낼 데이터를 변수로 예쁘게 포장합니다.
-    const resultData = {
-        type: 'GAME_RESULT',
-        gameId: 5,
-        success: isSuccess
-    };
-
-    // 2. F12 콘솔창에 기록을 남깁니다! (내 눈으로 확인용)
-    console.log("📨 React로 날아갈 쪽지 내용:", resultData);
-
-    // 3. 부모 창으로 쪽지를 진짜 던집니다.
-    window.parent.postMessage(resultData, '*');
+    // 1. 蹂대궪 ?곗씠?곕? 蹂?섎줈 ?덉걯寃??ъ옣?⑸땲??
+        if (window.CampusTurfGameBridge && typeof window.CampusTurfGameBridge.postResult === 'function') {
+        window.CampusTurfGameBridge.postResult({
+            type: 'GAME_RESULT',
+            gameId: 2,
+            success: isSuccess
+        });
+    } else {
+        window.parent.postMessage({
+            type: 'GAME_RESULT',
+            gameId: 2,
+            success: isSuccess
+        }, '*');
+    }
 }

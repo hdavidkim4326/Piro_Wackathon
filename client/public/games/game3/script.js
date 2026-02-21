@@ -1,17 +1,17 @@
-let score = 0;
+﻿let score = 0;
 let timeLeft = 30;
-const GOAL_SCORE = 150; // 목표 점수
+const GOAL_SCORE = 150; // 紐⑺몴 ?먯닔
 
-let gameTimerId;    // 남은 시간 타이머
-let spawnTimerId;   // 아이템 생성 타이머
-let gameLoopId;     // 게임 메인 루프 (움직임, 충돌)
+let gameTimerId;    // ?⑥? ?쒓컙 ??대㉧
+let spawnTimerId;   // ?꾩씠???앹꽦 ??대㉧
+let gameLoopId;     // 寃뚯엫 硫붿씤 猷⑦봽 (?吏곸엫, 異⑸룎)
 let isGameRunning = false;
 
-// 🔥 난이도 상승을 위해 속도를 '변수'로 변경
+// ?뵦 ?쒖씠???곸듅???꾪빐 ?띾룄瑜?'蹂??濡?蹂寃?
 let itemSpeed = 3;
-const SPAWN_RATE = 400; // 아이템 생성 주기 (ms)
+const SPAWN_RATE = 400; // ?꾩씠???앹꽦 二쇨린 (ms)
 
-// 화면 요소 가져오기
+// ?붾㈃ ?붿냼 媛?몄삤湲?
 const scoreDisplay = document.getElementById('current-score');
 const timeDisplay = document.getElementById('time-left');
 const gameArea = document.getElementById('game-area');
@@ -19,44 +19,44 @@ const catcher = document.getElementById('catcher');
 const startBtn = document.getElementById('start-btn');
 const readyCover = document.getElementById('ready-cover');
 
-let activeItems = []; // 화면에 떠있는 아이템들 관리 배열
+let activeItems = []; // ?붾㈃???좎엳???꾩씠?쒕뱾 愿由?諛곗뿴
 
 // =========================================
-// 1. 게임 로직 (시작, 종료, 타이머)
+// 1. 寃뚯엫 濡쒖쭅 (?쒖옉, 醫낅즺, ??대㉧)
 // =========================================
 
 startBtn.addEventListener('click', startGame);
 
 function startGame() {
-    // 초기화
+    // 珥덇린??
     score = 0;
     timeLeft = 30;
-    itemSpeed = 3; // 시작할 때 초기 속도 세팅
+    itemSpeed = 3; // ?쒖옉????珥덇린 ?띾룄 ?명똿
     activeItems = [];
     scoreDisplay.textContent = score;
     timeDisplay.textContent = timeLeft;
     isGameRunning = true;
 
-    // 기존 아이템 다 지우기
+    // 湲곗〈 ?꾩씠????吏?곌린
     const existingItems = document.querySelectorAll('.item');
     existingItems.forEach(item => item.remove());
 
-    // UI 변경
+    // UI 蹂寃?
     readyCover.style.display = 'none';
     catcher.style.left = '50%';
 
-    // 타이머 및 루프 시작
+    // ??대㉧ 諛?猷⑦봽 ?쒖옉
     gameTimerId = setInterval(countDown, 1000);
     spawnTimerId = setInterval(spawnItem, SPAWN_RATE);
     gameLoopId = requestAnimationFrame(gameLoop);
 }
 
-// 남은 시간 카운트다운
+// ?⑥? ?쒓컙 移댁슫?몃떎??
 function countDown() {
     timeLeft--;
     timeDisplay.textContent = timeLeft;
 
-    // 🔥 매초마다 아이템 떨어지는 속도가 0.2씩 빨라집니다! (후반부 텐션 폭발)
+    // ?뵦 留ㅼ큹留덈떎 ?꾩씠???⑥뼱吏???띾룄媛 0.2??鍮⑤씪吏묐땲?? (?꾨컲遺 ?먯뀡 ??컻)
     itemSpeed += 0.2;
 
     if (timeLeft <= 0) {
@@ -65,20 +65,20 @@ function countDown() {
 }
 
 // =========================================
-// 2. 조작 (바구니 움직이기 - 모바일 터치 포함)
+// 2. 議곗옉 (諛붽뎄???吏곸씠湲?- 紐⑤컮???곗튂 ?ы븿)
 // =========================================
 
 function moveCatcher(e) {
     if (!isGameRunning) return;
 
-    // 터치 이벤트와 마우스 이벤트 좌표 통일
+    // ?곗튂 ?대깽?몄? 留덉슦???대깽??醫뚰몴 ?듭씪
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const gameAreaRect = gameArea.getBoundingClientRect();
 
-    // 게임 영역 내에서의 상대적 X 좌표 계산
+    // 寃뚯엫 ?곸뿭 ?댁뿉?쒖쓽 ?곷???X 醫뚰몴 怨꾩궛
     let relativeX = clientX - gameAreaRect.left;
 
-    // 바구니가 화면 밖으로 나가지 않도록 고정
+    // 諛붽뎄?덇? ?붾㈃ 諛뽰쑝濡??섍?吏 ?딅룄濡?怨좎젙
     if (relativeX < 0) relativeX = 0;
     if (relativeX > gameAreaRect.width) relativeX = gameAreaRect.width;
 
@@ -87,12 +87,12 @@ function moveCatcher(e) {
 
 gameArea.addEventListener('mousemove', moveCatcher);
 gameArea.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // 모바일 터치 시 스크롤 방지
+    e.preventDefault(); // 紐⑤컮???곗튂 ???ㅽ겕濡?諛⑹?
     moveCatcher(e);
 }, { passive: false });
 
 // =========================================
-// 3. 아이템 생성 및 관리
+// 3. ?꾩씠???앹꽦 諛?愿由?
 // =========================================
 
 function spawnItem() {
@@ -101,15 +101,15 @@ function spawnItem() {
     const item = document.createElement('div');
     item.classList.add('item');
 
-    // 🔥 폭탄 생성 확률
+    // ?뵦 ??깂 ?앹꽦 ?뺣쪧
     const isGood = Math.random() > 0.35;
 
     if (isGood) {
-        item.textContent = '🏫';
+        item.textContent = '?룶';
         item.classList.add('good');
         item.dataset.points = 10;
     } else {
-        item.textContent = '💣';
+        item.textContent = '?뮗';
         item.classList.add('bad');
         item.dataset.points = -20;
     }
@@ -123,7 +123,7 @@ function spawnItem() {
 }
 
 // =========================================
-// 4. 게임 메인 루프 (애니메이션 + 충돌 체크)
+// 4. 寃뚯엫 硫붿씤 猷⑦봽 (?좊땲硫붿씠??+ 異⑸룎 泥댄겕)
 // =========================================
 
 function gameLoop() {
@@ -132,13 +132,13 @@ function gameLoop() {
     const catcherRect = catcher.getBoundingClientRect();
 
     activeItems.forEach((item, index) => {
-        // 1) 아이템 아래로 이동 (점점 빨라지는 itemSpeed 반영)
+        // 1) ?꾩씠???꾨옒濡??대룞 (?먯젏 鍮⑤씪吏??itemSpeed 諛섏쁺)
         let currentTop = parseFloat(item.style.top || -30);
         item.style.top = `${currentTop + itemSpeed}px`;
 
         const itemRect = item.getBoundingClientRect();
 
-        // 2) 충돌 체크 (바구니와 아이템이 겹쳤는가?)
+        // 2) 異⑸룎 泥댄겕 (諛붽뎄?덉? ?꾩씠?쒖씠 寃뱀낀?붽??)
         if (
             itemRect.bottom >= catcherRect.top &&
             itemRect.top <= catcherRect.bottom &&
@@ -150,7 +150,7 @@ function gameLoop() {
             item.remove();
             activeItems.splice(index, 1);
         }
-        // 3) 아까 수정한 화면 바닥 뚫고 지나간 아이템 제거
+        // 3) ?꾧퉴 ?섏젙???붾㈃ 諛붾떏 ?リ퀬 吏?섍컙 ?꾩씠???쒓굅
         else if (currentTop > gameArea.offsetHeight) {
             item.remove();
             activeItems.splice(index, 1);
@@ -161,7 +161,7 @@ function gameLoop() {
 }
 
 // =========================================
-// 5. 게임 종료
+// 5. 寃뚯엫 醫낅즺
 // =========================================
 
 function endGame() {
@@ -173,24 +173,26 @@ function endGame() {
     const isSuccess = score >= GOAL_SCORE;
 
     if (isSuccess) {
-        alert(`🎉 성공! ${score}점을 획득하여 목표를 달성했습니다!`);
+        alert(`?럦 ?깃났! ${score}?먯쓣 ?띾뱷?섏뿬 紐⑺몴瑜??ъ꽦?덉뒿?덈떎!`);
     } else {
-        alert(`💦 아쉽네요! ${score}점에 그쳐 실패했습니다. (목표: ${GOAL_SCORE}점)`);
+        alert(`?뮚 ?꾩돺?ㅼ슂! ${score}?먯뿉 洹몄퀜 ?ㅽ뙣?덉뒿?덈떎. (紐⑺몴: ${GOAL_SCORE}??`);
     }
 
     readyCover.style.display = 'flex';
-    startBtn.textContent = "다시 하기";
+    startBtn.textContent = "?ㅼ떆 ?섍린";
 
-    // 1. 보낼 데이터를 변수로 예쁘게 포장합니다.
-    const resultData = {
-        type: 'GAME_RESULT',
-        gameId: 5,
-        success: isSuccess
-    };
-
-    // 2. F12 콘솔창에 기록을 남깁니다! (내 눈으로 확인용)
-    console.log("📨 React로 날아갈 쪽지 내용:", resultData);
-
-    // 3. 부모 창으로 쪽지를 진짜 던집니다.
-    window.parent.postMessage(resultData, '*');
+    // 1. 蹂대궪 ?곗씠?곕? 蹂?섎줈 ?덉걯寃??ъ옣?⑸땲??
+        if (window.CampusTurfGameBridge && typeof window.CampusTurfGameBridge.postResult === 'function') {
+        window.CampusTurfGameBridge.postResult({
+            type: 'GAME_RESULT',
+            gameId: 3,
+            success: isSuccess
+        });
+    } else {
+        window.parent.postMessage({
+            type: 'GAME_RESULT',
+            gameId: 3,
+            success: isSuccess
+        }, '*');
+    }
 }

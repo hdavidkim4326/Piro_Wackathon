@@ -1,26 +1,26 @@
-let timeLeft = 20;
+﻿let timeLeft = 20;
 let matchedPairs = 0;
 const GOAL_PAIRS = 6;
 let timerId;
 let isGameRunning = false;
 
-// 화면 요소 가져오기
+// ?붾㈃ ?붿냼 媛?몄삤湲?
 const timeDisplay = document.getElementById('time-left');
 const matchDisplay = document.getElementById('match-count');
 const grid = document.getElementById('card-grid');
 const startBtn = document.getElementById('start-btn');
 const readyCover = document.getElementById('ready-cover');
 
-// 🎓 게임에 사용할 아이템 (캠퍼스 컨셉 6가지)
-const symbols = ['📚', '🎓', '💻', '🎒', '🏫', '☕'];
-let cardsArray = [...symbols, ...symbols]; // 두 개씩 짝을 맞추기 위해 배열 두 번 합침 (총 12개)
+// ?럳 寃뚯엫???ъ슜???꾩씠??(罹좏띁??而⑥뀎 6媛吏)
+const symbols = ['A', 'B', 'C', 'D', 'E', 'F'];
+let cardsArray = [...symbols, ...symbols]; // ??媛쒖뵫 吏앹쓣 留욎텛湲??꾪빐 諛곗뿴 ??踰??⑹묠 (珥?12媛?
 
-// 카드 상태 관리 변수들
+// 移대뱶 ?곹깭 愿由?蹂?섎뱾
 let hasFlippedCard = false;
-let lockBoard = false; // 카드가 뒤집히는 애니메이션 도중 다른 카드 클릭 방지
+let lockBoard = false; // 移대뱶媛 ?ㅼ쭛?덈뒗 ?좊땲硫붿씠???꾩쨷 ?ㅻⅨ 移대뱶 ?대┃ 諛⑹?
 let firstCard, secondCard;
 
-// [게임 시작]
+// [寃뚯엫 ?쒖옉]
 startBtn.addEventListener('click', startGame);
 
 function startGame() {
@@ -31,35 +31,35 @@ function startGame() {
     matchDisplay.textContent = matchedPairs;
     readyCover.style.display = 'none';
 
-    grid.innerHTML = ''; // 그리드 비우기
-    shuffle(); // 카드 섞기
-    createCards(); // 카드 화면에 깔기
+    grid.innerHTML = ''; // 洹몃━??鍮꾩슦湲?
+    shuffle(); // 移대뱶 ?욊린
+    createCards(); // 移대뱶 ?붾㈃??源붽린
 
     timerId = setInterval(countDown, 1000);
 }
 
-// 남은 시간 카운트다운
+// ?⑥? ?쒓컙 移댁슫?몃떎??
 function countDown() {
     if (!isGameRunning) return;
     timeLeft--;
     timeDisplay.textContent = timeLeft;
 
     if (timeLeft <= 0) {
-        endGame(false); // 시간 초과 시 실패
+        endGame(false); // ?쒓컙 珥덇낵 ???ㅽ뙣
     }
 }
 
-// 카드 섞기 함수 (피셔-예이츠 셔플 알고리즘)
+// 移대뱶 ?욊린 ?⑥닔 (?쇱뀛-?덉씠痢??뷀뵆 ?뚭퀬由ъ쬁)
 function shuffle() {
     cardsArray.sort(() => Math.random() - 0.5);
 }
 
-// 화면에 12장 카드 생성하기
+// ?붾㈃??12??移대뱶 ?앹꽦?섍린
 function createCards() {
     cardsArray.forEach(symbol => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('card');
-        cardElement.dataset.symbol = symbol; // 카드에 어떤 이모지인지 비밀 이름표 달아둠
+        cardElement.dataset.symbol = symbol; // 移대뱶???대뼡 ?대え吏?몄? 鍮꾨? ?대쫫???ъ븘??
 
         const front = document.createElement('div');
         front.classList.add('card-front');
@@ -71,46 +71,46 @@ function createCards() {
         cardElement.appendChild(front);
         cardElement.appendChild(back);
         
-        // 카드 클릭 시 flipCard 함수 실행
+        // 移대뱶 ?대┃ ??flipCard ?⑥닔 ?ㅽ뻾
         cardElement.addEventListener('click', flipCard);
         
         grid.appendChild(cardElement);
     });
 }
 
-// 카드 클릭했을 때 뒤집는 함수
+// 移대뱶 ?대┃?덉쓣 ???ㅼ쭛???⑥닔
 function flipCard() {
-    // 게임이 끝났거나, 보드가 잠겼거나, 방금 누른 카드를 또 누르면 무시
+    // 寃뚯엫???앸궗嫄곕굹, 蹂대뱶媛 ?좉꼈嫄곕굹, 諛⑷툑 ?꾨Ⅸ 移대뱶瑜????꾨Ⅴ硫?臾댁떆
     if (lockBoard || !isGameRunning) return;
     if (this === firstCard) return;
 
-    // 'flip' 클래스를 넣어서 휙 뒤집음
+    // 'flip' ?대옒?ㅻ? ?ｌ뼱?????ㅼ쭛??
     this.classList.add('flip');
 
     if (!hasFlippedCard) {
-        // 첫 번째 클릭한 카드일 때
+        // 泥?踰덉㎏ ?대┃??移대뱶????
         hasFlippedCard = true;
         firstCard = this;
         return;
     }
 
-    // 두 번째 클릭한 카드일 때
+    // ??踰덉㎏ ?대┃??移대뱶????
     secondCard = this;
     checkForMatch();
 }
 
-// 두 카드가 짝이 맞는지 확인
+// ??移대뱶媛 吏앹씠 留욌뒗吏 ?뺤씤
 function checkForMatch() {
     let isMatch = firstCard.dataset.symbol === secondCard.dataset.symbol;
 
     if (isMatch) {
-        disableCards(); // 맞았으면 클릭 못하게 고정
+        disableCards(); // 留욎븯?쇰㈃ ?대┃ 紐삵븯寃?怨좎젙
     } else {
-        unflipCards(); // 틀렸으면 다시 원상복구
+        unflipCards(); // ??몄쑝硫??ㅼ떆 ?먯긽蹂듦뎄
     }
 }
 
-// 짝을 맞췄을 때
+// 吏앹쓣 留욎톬????
 function disableCards() {
     firstCard.removeEventListener('click', flipCard);
     secondCard.removeEventListener('click', flipCard);
@@ -118,55 +118,57 @@ function disableCards() {
     matchedPairs++;
     matchDisplay.textContent = matchedPairs;
 
-    resetBoard(); // 변수 초기화
+    resetBoard(); // 蹂??珥덇린??
 
-    // 6쌍을 다 맞췄다면?
+    // 6?띿쓣 ??留욎톬?ㅻ㈃?
     if (matchedPairs === GOAL_PAIRS) {
-        setTimeout(() => endGame(true), 500); // 마지막 카드 뒤집히는거 보고 끝내기 위해 0.5초 딜레이
+        setTimeout(() => endGame(true), 500); // 留덉?留?移대뱶 ?ㅼ쭛?덈뒗嫄?蹂닿퀬 ?앸궡湲??꾪빐 0.5珥??쒕젅??
     }
 }
 
-// 짝이 틀렸을 때 (다시 뒤집기)
+// 吏앹씠 ??몄쓣 ??(?ㅼ떆 ?ㅼ쭛湲?
 function unflipCards() {
-    lockBoard = true; // 뒤집히는 동안 다른 카드 클릭 못하게 잠금
+    lockBoard = true; // ?ㅼ쭛?덈뒗 ?숈븞 ?ㅻⅨ 移대뱶 ?대┃ 紐삵븯寃??좉툑
 
     setTimeout(() => {
         firstCard.classList.remove('flip');
         secondCard.classList.remove('flip');
         resetBoard();
-    }, 800); // 0.8초 동안 틀린 카드 보여주다가 다시 덮기
+    }, 800); // 0.8珥??숈븞 ?由?移대뱶 蹂댁뿬二쇰떎媛 ?ㅼ떆 ??린
 }
 
-// 클릭 상태 초기화
+// ?대┃ ?곹깭 珥덇린??
 function resetBoard() {
     [hasFlippedCard, lockBoard] = [false, false];
     [firstCard, secondCard] = [null, null];
 }
 
-// 게임 종료 처리
+// 寃뚯엫 醫낅즺 泥섎━
 function endGame(isSuccess) {
     isGameRunning = false;
     clearInterval(timerId);
 
     if (isSuccess) {
-        alert(`🎉 성공! 모든 짝을 20초 안에 맞췄습니다!`);
+        alert(`?럦 ?깃났! 紐⑤뱺 吏앹쓣 20珥??덉뿉 留욎톬?듬땲??`);
     } else {
-        alert(`💦 시간 초과! 아쉽게도 짝을 다 찾지 못했습니다.`);
+        alert(`?뮚 ?쒓컙 珥덇낵! ?꾩돺寃뚮룄 吏앹쓣 ??李얠? 紐삵뻽?듬땲??`);
     }
 
     readyCover.style.display = 'flex';
-    startBtn.textContent = "다시 하기";
+    startBtn.textContent = "?ㅼ떆 ?섍린";
 
-    // 1. 보낼 데이터를 변수로 예쁘게 포장합니다.
-    const resultData = {
-        type: 'GAME_RESULT',
-        gameId: 4,
-        success: isSuccess
-    };
-
-    // 2. F12 콘솔창에 기록을 남깁니다! (내 눈으로 확인용)
-    console.log("📨 React로 날아갈 쪽지 내용:", resultData);
-
-    // 3. 부모 창으로 쪽지를 진짜 던집니다.
-    window.parent.postMessage(resultData, '*');
+    // 1. 蹂대궪 ?곗씠?곕? 蹂?섎줈 ?덉걯寃??ъ옣?⑸땲??
+        if (window.CampusTurfGameBridge && typeof window.CampusTurfGameBridge.postResult === 'function') {
+        window.CampusTurfGameBridge.postResult({
+            type: 'GAME_RESULT',
+            gameId: 4,
+            success: isSuccess
+        });
+    } else {
+        window.parent.postMessage({
+            type: 'GAME_RESULT',
+            gameId: 4,
+            success: isSuccess
+        }, '*');
+    }
 }
