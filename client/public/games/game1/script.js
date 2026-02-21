@@ -59,7 +59,7 @@ function endGame() {
     // 부모 창(React)으로 결과 전송
     window.parent.postMessage({
         type: 'GAME_RESULT',
-        gameLevel: 1,
+        gameId: 1,
         score: score,
         success: isSuccess
     }, '*');

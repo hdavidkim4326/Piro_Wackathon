@@ -112,8 +112,8 @@ function endGame() {
     // 📩 부모 창(React)으로 결과 전송
     window.parent.postMessage({
         type: 'GAME_RESULT',
-        gameLevel: 2,
-        score: successCount * 20, // 1번 성공할 때마다 20점씩 계산
+        gameId: 2,
+        score: successCount,
         success: isSuccess
     }, '*');
 }
