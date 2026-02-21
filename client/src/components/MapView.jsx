@@ -545,37 +545,7 @@ export default function MapView({ center }) {
     <div className="absolute inset-0">
       <div ref={mapContainerRef} className="h-full w-full" />
 
-      {tileCount > 0 && (
-        <div className="absolute right-4 top-20 z-20 rounded-xl border border-white/60 bg-white/80 px-3 py-1.5 text-[11px] font-semibold text-slate-500 shadow-sm backdrop-blur-md">
-          30m grid: {tileCount.toLocaleString()} cells
-          {specialCenterCount > 0 && (
-            <div className="mt-0.5 text-[10px] font-bold text-amber-700">
-              peanut pins: {specialCenterCount.toLocaleString()}
-            </div>
-          )}
-          {showOnly5x5Pins && (
-            <div className="mt-0.5 text-[10px] font-bold text-amber-900">
-              zoomed out: 5x5 only
-            </div>
-          )}
-          {hideAllPins && (
-            <div className="mt-0.5 text-[10px] font-bold text-slate-500">
-              full seoul view: pins hidden
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="absolute left-4 top-20 z-20 rounded-xl border border-white/60 bg-white/80 px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm backdrop-blur-md">
-        <span className="mr-2 inline-flex items-center gap-1 rounded-full border border-amber-700 bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-900">
-          <span className="inline-block h-2.5 w-4 rounded-full border border-amber-700 bg-gradient-to-r from-amber-100 to-amber-400" />
-          3x3
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-amber-900 bg-orange-200 px-2 py-0.5 text-[10px] font-extrabold text-amber-950">
-          <span className="inline-block h-2.5 w-4 rounded-full border border-amber-900 bg-gradient-to-r from-orange-200 to-amber-900" />
-          5x5
-        </span>
-      </div>
+      
 
       {demoMode && mapReady && (
         <div className="absolute bottom-32 left-1/2 z-30 -translate-x-1/2 animate-pulse rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
