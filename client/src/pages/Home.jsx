@@ -42,10 +42,11 @@ export default function Home() {
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-slate-100">
+    <div className="relative h-screen w-full overflow-hidden bg-[#fff9f0]" style={{ fontFamily: "'Gowun Dodum', sans-serif" }}>
       <MapView center={center} />
 
-      <div className="absolute left-4 right-4 top-20 z-30 flex flex-col gap-3">
+      <div className="absolute inset-x-0 mx-auto w-full max-w-[420px] top-3 pt-[env(safe-area-inset-top)] z-40 flex flex-col gap-1 px-4">
+        <img src="/images/logo.png" className="mx-auto w-[100px] drop-shadow-md" alt="땅콩 로고" />
         <MapSearchBar
           onPickPlace={(p) => {
             setMapCenter({ lat: p.lat, lng: p.lng })
@@ -62,7 +63,7 @@ export default function Home() {
         transition={{ type: 'spring', delay: 0.25 }}
         whileTap={{ scale: 0.92 }}
         onClick={handleGpsClick}
-        className="absolute bottom-28 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-white/90 shadow-lg backdrop-blur-xl transition-colors active:bg-slate-50"
+        className="absolute bottom-28 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-[20px] border-2 border-[#ffe8cc] bg-white text-[#ff922b] shadow-lg shadow-[#ff922b]/20 backdrop-blur-xl transition-colors active:bg-[#fff9f0]"
         aria-label="내 위치로 이동"
       >
         <svg
@@ -70,10 +71,10 @@ export default function Home() {
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth={2.2}
+          strokeWidth={2.4}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-5 w-5 text-indigo-500"
+          className="h-6 w-6"
         >
           <circle cx="12" cy="12" r="3" />
           <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />

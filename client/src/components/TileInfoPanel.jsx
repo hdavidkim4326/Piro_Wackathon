@@ -59,7 +59,7 @@ const UNIV_DOT_COLORS = {
   '연세대학교': '#0ea5e9',
   '고려대학교': '#ef4444',
   '한양대학교': '#a855f7',
-  '숙명여자대학교':'#0343aa'
+  '숙명여자대학교': '#0343aa'
 }
 
 const TAUNTS_EMPTY = [K.tauntEmpty1, K.tauntEmpty2, K.tauntEmpty3, K.tauntEmpty4]
@@ -71,11 +71,11 @@ function pickRandom(arr) {
 }
 
 export default function TileInfoPanel() {
-  const selectedTile    = useGameStore((s) => s.selectedTile)
+  const selectedTile = useGameStore((s) => s.selectedTile)
   const setSelectedTile = useGameStore((s) => s.setSelectedTile)
-  const user            = useGameStore((s) => s.user)
-  const location        = useGameStore((s) => s.location)
-  const navigate        = useNavigate()
+  const user = useGameStore((s) => s.user)
+  const location = useGameStore((s) => s.location)
+  const navigate = useNavigate()
   const { mutate: occupy, isPending } = useOccupyTile()
 
   const [gameOpen, setGameOpen] = useState(false)
@@ -83,8 +83,8 @@ export default function TileInfoPanel() {
   const [specialTile, setSpecialTile] = useState(null)
   const [taunt] = useState(() => Math.random())
 
-  const isOwned     = Boolean(selectedTile?.owner_univ)
-  const isMyTile    = isOwned && user?.university && selectedTile?.owner_univ === user.university
+  const isOwned = Boolean(selectedTile?.owner_univ)
+  const isMyTile = isOwned && user?.university && selectedTile?.owner_univ === user.university
   const isEnemyTile = isOwned && !isMyTile
 
   const myGridId = useMemo(() => {
@@ -100,8 +100,8 @@ export default function TileInfoPanel() {
 
   const tauntText = useMemo(() => {
     if (!selectedTile) return ''
-    if (!isOwned)  return pickRandom(TAUNTS_EMPTY)
-    if (isMyTile)  return pickRandom(TAUNTS_MINE)
+    if (!isOwned) return pickRandom(TAUNTS_EMPTY)
+    if (isMyTile) return pickRandom(TAUNTS_MINE)
     return pickRandom(TAUNTS_ENEMY)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTile?.grid_id, taunt])
@@ -151,7 +151,7 @@ export default function TileInfoPanel() {
       { gridId, university: user.university, level: Math.max(1, Number(result?.gameLevel || 1)), userId: user.id },
       {
         onSuccess: () => { console.log('[TileInfoPanel] occupy API completed:', { gridId }) },
-        onError:   (error) => { console.error('[TileInfoPanel] occupy API failed:', { gridId, error: error?.message }) },
+        onError: (error) => { console.error('[TileInfoPanel] occupy API failed:', { gridId, error: error?.message }) },
       }
     )
   }
@@ -176,8 +176,8 @@ export default function TileInfoPanel() {
   const statusColors = isMyTile
     ? { chipBg: 'rgba(253,204,128,0.18)', chipText: '#8A5E14', tauntBg: 'rgba(253,204,128,0.13)', tauntText: '#8A5E14' }
     : isEnemyTile
-    ? { chipBg: 'rgba(231,147,128,0.15)', chipText: '#B54030', tauntBg: 'rgba(231,147,128,0.10)', tauntText: '#B54030' }
-    : { chipBg: 'rgba(218,172,93,0.14)',  chipText: '#7A5512', tauntBg: 'rgba(218,172,93,0.10)',  tauntText: '#7A5512' }
+      ? { chipBg: 'rgba(231,147,128,0.15)', chipText: '#B54030', tauntBg: 'rgba(231,147,128,0.10)', tauntText: '#B54030' }
+      : { chipBg: 'rgba(218,172,93,0.14)', chipText: '#7A5512', tauntBg: 'rgba(218,172,93,0.10)', tauntText: '#7A5512' }
 
   return (
     <AnimatePresence>
@@ -188,13 +188,14 @@ export default function TileInfoPanel() {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-          className="fixed left-1/2 -translate-x-1/2 bottom-[120px] w-[calc(100%-2rem)] max-w-[430px] z-[55] rounded-3xl bg-white pb-[max(env(safe-area-inset-bottom),16px)]"
+          className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[420px] z-[55] rounded-t-[36px] bg-[#fff9f0] pb-[max(env(safe-area-inset-bottom),28px)]"
           style={{
             maxHeight: '70dvh',
-            boxShadow: '0 -2px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(235,184,101,0.20)',
+            boxShadow: '0 -8px 32px rgba(235,184,101,0.25), 0 0 0 2px rgba(255,232,204,1)',
+            fontFamily: "'Gowun Dodum', sans-serif"
           }}
         >
-          <div className="overflow-y-auto px-5 pt-3.5 pb-2">
+          <div className="overflow-y-auto px-6 pt-5 pb-3">
 
             {/* 드래그 핸들 (HEAD 유지) */}
             <div
@@ -207,23 +208,23 @@ export default function TileInfoPanel() {
                 <div className="flex items-center gap-2">
                   {tileColor && (
                     <span
-                      className="inline-block h-3 w-3 shrink-0 rounded-full"
+                      className="inline-block h-4 w-4 shrink-0 rounded-full"
                       style={{
                         backgroundColor: tileColor,
-                        boxShadow: `0 0 0 2.5px white, 0 0 0 4px ${tileColor}30`,
+                        boxShadow: `0 0 0 3px #fff9f0, 0 0 0 5px ${tileColor}40`,
                       }}
                     />
                   )}
                   <h3
-                    className="truncate text-[17px] font-extrabold leading-tight"
-                    style={{ color: '#1C1009' }}
+                    className="truncate text-[22px] font-black leading-tight text-[#5d4037]"
+                    style={{ fontFamily: "'MemomentKkukkukk', sans-serif", letterSpacing: "1px" }}
                   >
                     {isOwned ? `${selectedTile.owner_univ} ${K.territory}` : K.emptyTile}
                   </h3>
                 </div>
                 {/* game2에서 추가된 grid_id 표시 (디자인 톤 앤 매너 맞춤) */}
                 <p className="mt-0.5 text-[11px] font-medium" style={{ color: '#A08372' }}>
-                  
+
                 </p>
               </div>
 
@@ -281,8 +282,8 @@ export default function TileInfoPanel() {
                 className="mb-4 rounded-2xl px-4 py-3 text-[12px] font-medium"
                 style={{
                   background: 'rgba(235,184,101,0.10)',
-                  color:      '#8A5E14',
-                  border:     '1px solid rgba(235,184,101,0.22)',
+                  color: '#8A5E14',
+                  border: '1px solid rgba(235,184,101,0.22)',
                 }}
               >
                 📌 {K.moveToTileHint}
@@ -290,27 +291,25 @@ export default function TileInfoPanel() {
               </div>
             )}
 
-            <div className="flex gap-2.5">
+            <div className="mt-2 flex gap-3">
               <button
                 onClick={handleStartMission}
                 disabled={isPending || !isAtTile}
-                className="flex-1 rounded-2xl px-4 py-3.5 text-[15px] font-bold text-white transition-all active:scale-[0.97] disabled:opacity-40 disabled:shadow-none"
+                className="flex-1 rounded-[24px] px-4 py-4 text-[20px] font-black text-white transition-all active:scale-[0.96] disabled:opacity-45 disabled:shadow-none shadow-[0_8px_20px_rgba(235,184,101,0.4)]"
                 style={{
                   background: isEnemyTile
                     ? 'linear-gradient(135deg, #E79380, #DF7E66)'
-                    : 'linear-gradient(135deg, #FDCC80, #EBB865, #DF7E66)',
-                  boxShadow: isEnemyTile
-                    ? '0 6px 20px rgba(223,126,102,0.30)'
-                    : '0 6px 20px rgba(235,184,101,0.32)',
-                  color: isEnemyTile ? '#fff' : '#5C3100',
+                    : 'linear-gradient(135deg, #ffd8a8, #ff922b)',
+                  fontFamily: "'MemomentKkukkukk', sans-serif",
+                  letterSpacing: "1px"
                 }}
               >
                 {actionLabel()}
               </button>
               <button
                 onClick={handleClose}
-                className="shrink-0 rounded-2xl px-5 py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]"
-                style={{ background: '#F5F0E8', color: '#8A7060' }}
+                className="shrink-0 rounded-[24px] px-6 py-4 text-[16px] font-bold transition-all active:scale-[0.96] active:bg-[#ffe8cc]"
+                style={{ background: '#fff4e6', color: '#8d6e63' }}
               >
                 {K.close}
               </button>
