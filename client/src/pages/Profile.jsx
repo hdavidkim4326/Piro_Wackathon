@@ -1,119 +1,165 @@
 /**
- * 프로필 페이지
- * ────────────
- * 사용자 정보 입력/수정과 소속 대학교 설정을 담당한다.
- * MVP 단계에서는 간단한 닉네임/대학교 입력 폼을 제공한다.
+ * 마이페이지 (프로필)
+ * ─────────────────
+ * 비로그인 → /auth로 유도
+ * 로그인 → 프로필 + 통계 + 데모 모드 토글 + 로그아웃
  */
 
-import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import { useMyStats } from '../hooks/useTiles'
 import useGameStore from '../store/gameStore'
 
-/**
- * 프로필 설정 페이지 컴포넌트.
- * 닉네임과 대학교를 입력받아 Zustand 스토어에 저장한다.
- */
+const MotionDiv = motion.div
+
 export default function Profile() {
-  const user = useGameStore((state) => state.user)
-  const setUser = useGameStore((state) => state.setUser)
+  const navigate = useNavigate()
+  const user = useGameStore((s) => s.user)
+  const logout = useGameStore((s) => s.logout)
+  const demoMode = useGameStore((s) => s.demoMode)
+  const setDemoMode = useGameStore((s) => s.setDemoMode)
+  const { data: stats, isLoading: isStatsLoading, isError: isStatsError } = useMyStats(user?.id)
 
-  const [nickname, setNickname] = useState(user?.nickname || '')
-  const [university, setUniversity] = useState(user?.university || '')
-  const [saved, setSaved] = useState(false)
-
-  /**
-   * 폼 제출 핸들러 — 사용자 정보를 저장한다.
-   */
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!nickname.trim() || !university.trim()) return
-
-    setUser({ nickname: nickname.trim(), university: university.trim() })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  if (!user) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-slate-50 px-6">
+        <MotionDiv
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center"
+        >
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-4xl shadow-lg">
+            🔒
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-800">로그인이 필요합니다</h2>
+          <p className="mt-2 text-sm text-slate-400">학교 이메일로 가입하고 게임을 시작하세요</p>
+          <button
+            onClick={() => navigate('/auth')}
+            className="mt-6 rounded-2xl bg-indigo-500 px-8 py-3.5 font-bold text-white shadow-lg shadow-indigo-500/25 transition-all active:scale-95"
+          >
+            학교 인증하기
+          </button>
+        </MotionDiv>
+      </div>
+    )
   }
 
   return (
-    <div className="h-full overflow-y-auto pb-20">
-      {/* 헤더 */}
-      <header className="bg-surface/80 backdrop-blur-md border-b border-surface-light px-4 py-3">
-        <h1 className="text-lg font-bold text-primary max-w-lg mx-auto">
-          내 프로필
-        </h1>
+    <div className="h-full overflow-y-auto bg-slate-50 pb-28">
+      <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/80 px-5 py-4 backdrop-blur-xl">
+        <h1 className="mx-auto max-w-lg text-xl font-bold text-slate-800">마이페이지</h1>
       </header>
 
-      {/* 프로필 폼 */}
-      <div className="max-w-lg mx-auto p-4">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* 프로필 아바타 */}
-          <div className="flex justify-center pt-4">
-            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-4xl">
-              {user?.nickname ? user.nickname.charAt(0).toUpperCase() : '?'}
+      <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 pt-8">
+        <MotionDiv
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 20 }}
+          className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-900/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-2xl font-bold text-white shadow-lg shadow-indigo-500/20">
+              {user.nickname?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-extrabold text-slate-800">{user.nickname}</h2>
+              <p className="truncate text-sm font-medium text-slate-400">{user.university}</p>
             </div>
           </div>
+        </MotionDiv>
 
-          {/* 닉네임 입력 */}
-          <div>
-            <label
-              htmlFor="nickname"
-              className="block text-sm font-medium text-text-secondary mb-2"
-            >
-              닉네임
-            </label>
-            <input
-              id="nickname"
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="게임에서 사용할 닉네임"
-              maxLength={30}
-              className="w-full px-4 py-3 bg-surface-light border border-surface-light focus:border-primary rounded-xl text-text-primary placeholder-text-secondary/50 outline-none transition-colors"
-            />
-          </div>
-
-          {/* 대학교 입력 */}
-          <div>
-            <label
-              htmlFor="university"
-              className="block text-sm font-medium text-text-secondary mb-2"
-            >
-              소속 대학교
-            </label>
-            <input
-              id="university"
-              type="text"
-              value={university}
-              onChange={(e) => setUniversity(e.target.value)}
-              placeholder="예: 서울대학교"
-              maxLength={50}
-              className="w-full px-4 py-3 bg-surface-light border border-surface-light focus:border-primary rounded-xl text-text-primary placeholder-text-secondary/50 outline-none transition-colors"
-            />
-          </div>
-
-          {/* 저장 버튼 */}
-          <button
-            type="submit"
-            className="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-colors"
-          >
-            {saved ? '저장 완료!' : '저장하기'}
-          </button>
-        </form>
-
-        {/* 현재 저장된 정보 */}
-        {user && (
-          <div className="mt-6 p-4 bg-surface-light rounded-xl">
-            <h3 className="text-sm font-semibold text-text-secondary mb-2">
-              현재 저장된 정보
-            </h3>
-            <p className="text-text-primary">
-              <span className="text-text-secondary">닉네임:</span>{' '}
-              {user.nickname}
+        <MotionDiv
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 20, delay: 0.04 }}
+          className="grid grid-cols-2 gap-3"
+        >
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm shadow-slate-900/[0.04]">
+            <p className="text-[11px] font-semibold text-slate-400">내 점령 횟수</p>
+            <p className="mt-1 text-xl font-extrabold tracking-tight text-slate-800">
+              {isStatsLoading ? '...' : (stats?.capture_count ?? 0)}
             </p>
-            <p className="text-text-primary">
-              <span className="text-text-secondary">대학교:</span>{' '}
-              {user.university}
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm shadow-slate-900/[0.04]">
+            <p className="text-[11px] font-semibold text-slate-400">내 기여도</p>
+            <p className="mt-1 text-xl font-extrabold tracking-tight text-slate-800">
+              {isStatsLoading ? '...' : (stats?.contribution_score ?? 0)}
             </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm shadow-slate-900/[0.04]">
+            <p className="text-[11px] font-semibold text-slate-400">내가 점령한 고유 칸</p>
+            <p className="mt-1 text-xl font-extrabold tracking-tight text-slate-800">
+              {isStatsLoading ? '...' : (stats?.unique_capture_count ?? 0)}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm shadow-slate-900/[0.04]">
+            <p className="text-[11px] font-semibold text-slate-400">우리 학교 점령 칸</p>
+            <p className="mt-1 text-xl font-extrabold tracking-tight text-slate-800">
+              {isStatsLoading ? '...' : (stats?.organization_tile_count ?? 0)}
+            </p>
+          </div>
+        </MotionDiv>
+
+        {isStatsError && (
+          <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-500">
+            통계 데이터를 불러오지 못했습니다.
           </div>
         )}
+
+        <MotionDiv
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 20, delay: 0.08 }}
+          className="rounded-3xl border border-slate-100 bg-white shadow-lg shadow-slate-900/5"
+        >
+          <button
+            onClick={() => setDemoMode(!demoMode)}
+            className="flex w-full items-center justify-between px-5 py-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${
+                demoMode ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-400'
+              }`}>
+                🛰️
+              </div>
+              <div className="text-left">
+                <p className="text-[15px] font-bold text-slate-800">데모 모드</p>
+                <p className="text-xs text-slate-400">지도 탭으로 위치를 자유롭게 이동</p>
+              </div>
+            </div>
+            <div className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${
+              demoMode ? 'bg-rose-500' : 'bg-slate-200'
+            }`}>
+              <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                demoMode ? 'translate-x-5' : 'translate-x-0.5'
+              }`} />
+            </div>
+          </button>
+
+          {demoMode && (
+            <div className="border-t border-slate-100 px-5 py-3">
+              <p className="text-xs font-medium text-rose-500">
+                GPS가 비활성화되었습니다. 지도를 탭하면 해당 위치로 즉시 이동합니다.
+              </p>
+            </div>
+          )}
+        </MotionDiv>
+
+        <MotionDiv
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 20, delay: 0.16 }}
+        >
+          <button
+            onClick={() => {
+              logout()
+              navigate('/')
+            }}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left text-[15px] font-semibold text-rose-500 transition-colors active:bg-slate-50"
+          >
+            로그아웃
+          </button>
+        </MotionDiv>
       </div>
     </div>
   )

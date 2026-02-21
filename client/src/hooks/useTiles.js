@@ -1,29 +1,33 @@
 /**
- * 타일 데이터 훅 (React Query)
- * ────────────────────────────
- * 서버에서 타일 목록을 가져오고 캐싱을 관리한다.
- * Zustand의 mapBounds가 바뀔 때마다 자동으로 재요청된다.
+ * 서버 데이터 훅 모음 (React Query)
+ * ─────────────────────────────────
+ * 타일·랭킹 등 서버에서 가져오는 데이터를 React Query로 관리한다.
+ *
+ * [점령 후 즉시 동기화 전략]
+ *   invalidateQueries → staleTime 무시하고 즉시 refetch
+ *   + refetchType: 'active' → 현재 마운트된 쿼리만 refetch
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTiles, occupyTile } from '../lib/api'
+import {
+  claimTileGame,
+  fetchMyStats,
+  fetchRanking,
+  fetchSpecialCenters,
+  fetchTiles,
+  occupyTile,
+} from '../lib/api'
 import useGameStore from '../store/gameStore'
 
-/**
- * 현재 지도 뷰포트 내의 타일 목록을 조회하는 훅.
- *
- * mapBounds가 null이면(아직 지도가 로드되지 않았으면) 쿼리를 비활성화한다.
- * mapBounds가 변경될 때마다 쿼리 키가 바뀌므로 자동으로 refetch된다.
- *
- * @returns {import('@tanstack/react-query').UseQueryResult} React Query 결과 객체
- */
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  타일 훅
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 export function useTiles() {
   const mapBounds = useGameStore((state) => state.mapBounds)
 
   return useQuery({
-    // mapBounds 값 자체를 쿼리 키에 포함시켜 뷰포트가 바뀌면 새로 요청
     queryKey: ['tiles', mapBounds],
-
     queryFn: () =>
       fetchTiles({
         minLat: mapBounds.minLat,
@@ -31,31 +35,111 @@ export function useTiles() {
         minLng: mapBounds.minLng,
         maxLng: mapBounds.maxLng,
       }),
-
-    // mapBounds가 없으면 쿼리 실행하지 않음
     enabled: !!mapBounds,
-
-    // 10초 동안 캐시 유지 (너무 자주 서버에 요청하지 않도록)
-    staleTime: 10 * 1000,
+    staleTime: 5_000,
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
   })
 }
 
-/**
- * 타일 점령 요청을 보내는 뮤테이션 훅.
- *
- * 점령 성공 시 타일 목록 캐시를 무효화해서 최신 데이터를 다시 가져온다.
- *
- * @returns {import('@tanstack/react-query').UseMutationResult} 뮤테이션 결과 객체
- */
+export function useSpecialCenters() {
+  const mapBounds = useGameStore((state) => state.mapBounds)
+
+  return useQuery({
+    queryKey: ['special-centers', mapBounds],
+    queryFn: () =>
+      fetchSpecialCenters({
+        minLat: mapBounds.minLat,
+        maxLat: mapBounds.maxLat,
+        minLng: mapBounds.minLng,
+        maxLng: mapBounds.maxLng,
+      }),
+    enabled: !!mapBounds,
+    staleTime: 15_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  점령 뮤테이션
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 export function useOccupyTile() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: occupyTile,
 
-    // 점령 성공 후 타일 목록 캐시를 무효화하여 UI를 갱신
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tiles'] })
+    onSuccess: (data) => {
+      // staleTime을 무시하고 현재 마운트된 tiles/ranking 쿼리를 즉시 refetch
+      queryClient.invalidateQueries({
+        queryKey: ['tiles'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['ranking'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['user', 'stats'],
+        refetchType: 'active',
+      })
+
+      console.log('[useOccupyTile] 점령 성공, 타일 갱신 트리거:', data)
     },
+  })
+}
+
+export function useClaimSpecialMission() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ gridId, sessionId, userId }) =>
+      claimTileGame(gridId, sessionId, { userId }),
+    onSuccess: (data) => {
+      if (!data?.capture_applied) return
+
+      queryClient.invalidateQueries({
+        queryKey: ['tiles'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['ranking'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['user', 'stats'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['profile', 'me'],
+        refetchType: 'active',
+      })
+
+      console.log('[useClaimSpecialMission] special capture success', data)
+    },
+  })
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  랭킹 훅
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function useRanking(limit = 10) {
+  return useQuery({
+    queryKey: ['ranking', limit],
+    queryFn: () => fetchRanking(limit),
+    staleTime: 30_000,
+  })
+}
+
+export function useMyStats(userId) {
+  return useQuery({
+    queryKey: ['user', 'stats', userId],
+    queryFn: () => fetchMyStats(userId),
+    enabled: Boolean(userId),
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   })
 }

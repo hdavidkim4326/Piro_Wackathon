@@ -1,16 +1,17 @@
-# 🏰 Campus Turf War — 대학교 진영 지도 점령 게임
+# 🥜 땅콩 — 땅을 콩!
 
-> 실제 지도 위에서 30m × 30m 그리드를 점령하며 우리 대학교의 영토를 넓혀라!
+> 실제 지도 위 30m × 30m 격자를 점령하며 소속 진영의 영토를 넓혀라!
 
-**Campus Turf War**는 대학생들이 실제 위치 기반으로 지도 위의 타일(그리드)을 점령하며 경쟁하는 모바일 웹 게임(PWA)입니다.
+**땅콩**은 위치 기반 영토 점령 모바일 웹 게임입니다.
+대학교, 고향, 직장 등 다양한 소속을 기반으로 지도 위의 타일을 점령하고 전국 순위를 경쟁합니다.
 
 ---
 
-## 📸 프로젝트 미리보기
+## 📸 주요 화면
 
-| 지도 화면 | 랭킹 화면 | 프로필 화면 |
-|:---------:|:---------:|:-----------:|
-| 카카오맵 위에 점령 타일 표시 | 대학교별 점령 순위 | 닉네임·소속 대학 설정 |
+| 지도 (점령) | 이벤트 (챌린지) | 랭킹 | 로그인 |
+|:-----------:|:---------------:|:----:|:------:|
+| 카카오맵 위에 대학별 색상 폴리곤 | 진행 중 · 커밍순 챌린지 | 대학교별 점령 순위 | 토스 스타일 인증 퍼널 |
 
 ---
 
@@ -19,11 +20,11 @@
 | 영역 | 기술 |
 |------|------|
 | **인프라** | Docker Compose, PostgreSQL 15 |
-| **백엔드** | Python 3.11+, FastAPI, SQLModel (Async), asyncpg |
-| **프론트엔드** | React (Vite), JavaScript, Tailwind CSS v4 |
-| **상태 관리** | Zustand (클라이언트), TanStack React Query (서버) |
-| **지도** | Kakao Maps SDK (`react-kakao-maps-sdk`) |
-| **기타** | Framer Motion (애니메이션), Axios (HTTP 통신) |
+| **백엔드** | Python 3.11+, FastAPI, SQLAlchemy 2.0 (Sync), psycopg2, Pydantic v2, bcrypt |
+| **프론트엔드** | React 18 (Vite), JavaScript, Tailwind CSS v4 |
+| **상태 관리** | Zustand + persist (클라이언트), TanStack React Query (서버) |
+| **지도** | Kakao Maps JavaScript SDK (`react-kakao-maps-sdk`) |
+| **UI/UX** | Framer Motion (애니메이션), Axios (HTTP) |
 
 ---
 
@@ -31,44 +32,66 @@
 
 ```
 Piro_hack/
-├── client/                     # 프론트엔드 (React + Vite)
+├── client/                          # 프론트엔드 (React + Vite)
 │   ├── src/
-│   │   ├── components/         # 재사용 컴포넌트
-│   │   │   ├── BottomNav.jsx   #   하단 네비게이션 바
-│   │   │   ├── MapView.jsx     #   카카오맵 + 타일 렌더링
-│   │   │   └── TileInfoPanel.jsx#  타일 정보 팝업 패널
-│   │   ├── hooks/              # 커스텀 훅
-│   │   │   ├── useGeolocation.js#  GPS 위치 추적
-│   │   │   └── useTiles.js     #   타일 데이터 (React Query)
+│   │   ├── components/
+│   │   │   ├── BottomNav.jsx        #   플로팅 알약 네비게이션
+│   │   │   ├── CaptureMenu.jsx      #   점령 메뉴 UI
+│   │   │   ├── MapSearchBar.jsx     #   지도 검색 바
+│   │   │   ├── MapView.jsx          #   카카오맵 + 타일 폴리곤 렌더링
+│   │   │   ├── TileGameModal.jsx    #   타일 점령 미니게임 모달
+│   │   │   ├── TileInfoPanel.jsx    #   타일 정보 바텀 시트
+│   │   │   └── Top3Rankingwidget.jsx#   상위 3위 위젯
+│   │   ├── games/
+│   │   │   ├── BasicRpsGame.jsx     #   가위바위보 게임
+│   │   │   ├── BasicTapGame.jsx     #   연타 게임
+│   │   │   ├── BasicTimingGame.jsx  #   타이밍 게임
+│   │   │   ├── BossClickGame.jsx    #   보스 클릭 게임
+│   │   │   └── registry.js          #   게임 레지스트리
+│   │   ├── hooks/
+│   │   │   ├── useGeolocation.js    #   GPS 위치 추적
+│   │   │   ├── useKakaoLoader.js    #   카카오맵 SDK 로더
+│   │   │   ├── useKakaoPlaces.js    #   카카오 장소 검색
+│   │   │   └── useTiles.js          #   타일 · 랭킹 React Query 훅
 │   │   ├── lib/
-│   │   │   └── api.js          # Axios 인스턴스 & API 함수
-│   │   ├── pages/              # 페이지 컴포넌트
-│   │   │   ├── Home.jsx        #   메인 지도 페이지
-│   │   │   ├── Ranking.jsx     #   대학교 랭킹 페이지
-│   │   │   └── Profile.jsx     #   프로필 설정 페이지
+│   │   │   └── api.js               #   Axios 인스턴스 & API 함수
+│   │   ├── pages/
+│   │   │   ├── AuthPage.jsx         #   토스 스타일 로그인/회원가입
+│   │   │   ├── Events.jsx           #   챌린지 허브 페이지
+│   │   │   ├── Home.jsx             #   메인 지도 페이지
+│   │   │   ├── Profile.jsx          #   프로필 & 로그아웃
+│   │   │   └── Ranking.jsx          #   대학교 랭킹 페이지
 │   │   ├── store/
-│   │   │   └── gameStore.js    # Zustand 전역 상태
-│   │   ├── App.jsx             # 라우팅 설정
-│   │   ├── main.jsx            # 앱 진입점
-│   │   └── index.css           # Tailwind + 글로벌 스타일
+│   │   │   └── gameStore.js         #   Zustand 전역 상태 (persist)
+│   │   ├── App.jsx                  #   라우팅 설정
+│   │   ├── main.jsx                 #   앱 진입점
+│   │   └── index.css                #   Tailwind + 글로벌 스타일
 │   ├── Dockerfile
 │   ├── index.html
 │   └── vite.config.js
 │
-├── server/                     # 백엔드 (FastAPI)
+├── server/                          # 백엔드 (FastAPI)
 │   ├── api/
-│   │   └── tiles.py            # 타일 API 라우터
+│   │   ├── games.py                 #   미니게임 API
+│   │   ├── ranking.py               #   대학별 랭킹 API
+│   │   ├── tiles.py                 #   타일 조회 · 점령 API
+│   │   └── users.py                 #   회원가입 · 로그인 · 이메일 인증
 │   ├── core/
-│   │   └── grid.py             # 그리드 좌표 계산 유틸리티
-│   ├── config.py               # 환경 설정 (pydantic-settings)
-│   ├── database.py             # 비동기 DB 연결 설정
-│   ├── models.py               # SQLModel 테이블 정의
-│   ├── main.py                 # FastAPI 앱 엔트리포인트
+│   │   ├── email_verification.py    #   이메일 인증 코드 발송/검증
+│   │   ├── game_rules.py            #   게임 규칙 로직
+│   │   ├── game_runtime.py          #   게임 실행 런타임
+│   │   ├── grid.py                  #   그리드 좌표 계산 유틸리티
+│   │   └── special_tiles.py         #   특수 타일 로직
+│   ├── config.py                    #   환경 설정 (pydantic-settings)
+│   ├── database.py                  #   동기 DB 연결 (SQLAlchemy)
+│   ├── models.py                    #   SQLAlchemy 2.0 ORM 모델
+│   ├── schemas.py                   #   Pydantic API 스키마
+│   ├── main.py                      #   FastAPI 앱 엔트리포인트
 │   ├── Dockerfile
 │   └── requirements.txt
 │
-├── docker-compose.yml          # Docker Compose 오케스트레이션
-├── .env                        # 환경 변수 (git에 포함하지 않음)
+├── docker-compose.yml               # Docker Compose 오케스트레이션
+├── .env                             # 루트 환경 변수
 ├── .gitignore
 └── README.md
 ```
@@ -79,56 +102,63 @@ Piro_hack/
 
 ### 그리드 시스템
 
-PostGIS 같은 GIS 라이브러리 없이 **단순 수학 연산**으로 지도를 격자로 나눕니다:
+PostGIS 없이 **단순 수학 연산**으로 지도를 격자로 분할합니다:
 
 | 항목 | 값 | 설명 |
 |------|----|------|
-| 위도 한 칸 | `0.00027°` | 약 30m (위도 1° ≈ 111km) |
-| 경도 한 칸 | `0.00034°` | 약 30m (한국 위도 기준, 경도 1° ≈ 88km) |
-| Grid ID 공식 | `grid_{floor(lat/0.00027)}_{floor(lng/0.00034)}` | 전 세계 어디든 동일한 그리드 |
+| 위도 한 칸 | `0.00027°` | 약 30m |
+| 경도 한 칸 | `0.00034°` | 약 30m (한국 기준) |
+| Grid ID | `grid_{floor(lat/0.00027)}_{floor(lng/0.00034)}` | 전 세계 동일 격자 |
 
 ### 동작 흐름
 
 ```
-1. 사용자가 앱을 열면 GPS로 현재 위치를 받아온다
-2. 지도 뷰포트 내의 그리드 ID들을 계산한다
-3. 서버에서 해당 그리드들의 점령 정보를 가져온다
-4. 카카오맵 위에 대학교별 색상으로 폴리곤을 그린다
-5. 사용자가 타일을 탭하면 점령/정보 확인이 가능하다
+1. GPS로 현재 위치를 받아온다
+2. 뷰포트 내 그리드 ID를 계산한다
+3. 서버에서 점령 정보를 가져온다
+4. 대학교별 색상 폴리곤을 카카오맵 위에 그린다
+5. 타일을 탭하면 미니게임 → 점령/방어
 ```
 
 ---
 
-## 🚀 빠른 시작 (Quick Start)
+## 🚀 빠른 시작
 
 ### 사전 요구사항
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) 설치
-- [Node.js 20+](https://nodejs.org/) (로컬 프론트엔드 개발 시)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Node.js 20+](https://nodejs.org/) (로컬 프론트 개발 시)
 - [Python 3.11+](https://www.python.org/) (로컬 백엔드 개발 시)
 
-### 방법 1: Docker Compose로 한번에 실행 (권장)
+### 환경 변수 설정
+
+| 파일 | 주요 변수 |
+|------|-----------|
+| `.env` | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` |
+| `server/.env` | `DATABASE_URL`, `SMTP_*` (이메일 인증) |
+| `client/.env` | `VITE_KAKAO_MAP_KEY`, `VITE_API_URL` |
+
+> Gmail SMTP 사용 시 `SMTP_PASSWORD`는 일반 비밀번호가 아닌 **앱 비밀번호**를 입력하세요.
+
+### 방법 1: Docker Compose (권장)
 
 ```bash
-# 1. 프로젝트 클론
+# 프로젝트 클론
 git clone <레포지토리-URL>
 cd Piro_hack
 
-# 2. 환경 변수 파일 확인 (이미 .env 파일이 있음)
-cat .env
-
-# 3. Docker Compose로 전체 서비스 시작
+# 전체 서비스 시작
 docker compose up --build
 
-# 4. 브라우저에서 접속
-#    프론트엔드: http://localhost:5173
-#    백엔드 API: http://localhost:8000
-#    API 문서:   http://localhost:8000/docs
+# 접속
+#   프론트엔드  → http://localhost:5173
+#   백엔드 API → http://localhost:8000
+#   API 문서   → http://localhost:8000/api/docs
 ```
 
-### 방법 2: 로컬에서 개별 실행
+### 방법 2: 로컬 개별 실행
 
-**터미널 1 — PostgreSQL (Docker)**
+**터미널 1 — DB**
 ```bash
 docker compose up postgres
 ```
@@ -137,7 +167,7 @@ docker compose up postgres
 ```bash
 cd server
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
@@ -151,23 +181,11 @@ npm run dev
 
 ---
 
-## 🗺️ 카카오맵 SDK 설정
+## 🗺️ 카카오맵 설정
 
-카카오맵을 사용하려면 [Kakao Developers](https://developers.kakao.com/)에서 앱을 등록하고 JavaScript 키를 발급받아야 합니다.
-
-1. [Kakao Developers](https://developers.kakao.com/)에 로그인
-2. **내 애플리케이션** → **애플리케이션 추가하기**
-3. **앱 키** → **JavaScript 키** 복사
-4. `client/index.html`의 `<head>`에 다음 스크립트 추가:
-
-```html
-<script
-  type="text/javascript"
-  src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&autoload=false"
-></script>
-```
-
-> **참고**: 카카오맵 키 없이도 앱은 동작합니다. 지도 대신 플레이스홀더 UI가 표시되며, GPS 위치와 타일 데이터는 정상적으로 수신됩니다.
+1. [Kakao Developers](https://developers.kakao.com/)에서 앱 등록
+2. **JavaScript 키** 복사 → `client/.env`에 `VITE_KAKAO_MAP_KEY=발급받은키` 입력
+3. 플랫폼 → **Web** → `http://localhost:5173` 등록
 
 ---
 
@@ -176,22 +194,16 @@ npm run dev
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | `GET` | `/health` | 서버 상태 확인 |
-| `GET` | `/api/tiles?min_lat=...&max_lat=...&min_lng=...&max_lng=...` | 뷰포트 내 타일 목록 조회 |
+| **타일** | | |
+| `GET` | `/api/tiles` | 전체 점령 타일 조회 |
 | `POST` | `/api/occupy` | 타일 점령 요청 |
-
-### 요청/응답 예시
-
-**타일 조회**
-```bash
-curl "http://localhost:8000/api/tiles?min_lat=37.56&max_lat=37.57&min_lng=126.97&max_lng=126.98"
-```
-
-**타일 점령**
-```bash
-curl -X POST http://localhost:8000/api/occupy \
-  -H "Content-Type: application/json" \
-  -d '{"grid_id": "grid_139131_373471", "university": "서울대학교"}'
-```
+| **랭킹** | | |
+| `GET` | `/api/ranking` | 대학별 점령 순위 Top 10 |
+| **인증** | | |
+| `POST` | `/api/send-code` | 학교 이메일 인증 코드 발송 |
+| `POST` | `/api/verify-code` | 인증 코드 확인 |
+| `POST` | `/api/signup` | 회원가입 (이메일 + 닉네임 + 비밀번호) |
+| `POST` | `/api/login` | 로그인 (이메일 + 비밀번호) |
 
 ---
 
@@ -199,12 +211,10 @@ curl -X POST http://localhost:8000/api/occupy \
 
 ### 코드 컨벤션
 
-- **주석 언어**: 모든 코드 주석과 JSDoc은 **한국어**로 작성
-- **변수·함수명**: 영어 사용 (camelCase for JS, snake_case for Python)
-- **프론트엔드**: `.jsx`, `.js` 파일만 사용 (TypeScript 사용 금지)
-- **상태 관리 원칙**:
-  - 클라이언트 상태 (사용자 정보, 위치, UI) → **Zustand**
-  - 서버 상태 (타일 데이터, 랭킹) → **React Query**
+- **주석**: 모든 코드 주석은 **한국어**
+- **네이밍**: 영어 (JS: camelCase, Python: snake_case)
+- **프론트엔드**: `.jsx` / `.js` 파일만 사용 (No TypeScript)
+- **상태 관리**: 클라이언트 → Zustand, 서버 → React Query
 
 ### 주요 명령어
 
@@ -229,17 +239,19 @@ docker compose down -v
 
 ## 🗓️ 로드맵
 
-- [x] 프로젝트 스캐폴딩 (모노레포 구조)
-- [x] Docker Compose 설정
-- [x] 그리드 계산 로직 구현
-- [x] FastAPI 타일 API (더미 데이터)
-- [x] React 프론트엔드 기본 UI
-- [ ] 카카오맵 타일 폴리곤 렌더링
-- [ ] DB 연동 (Tile CRUD)
-- [ ] 사용자 인증 (로그인/회원가입)
+- [x] 모노레포 스캐폴딩 & Docker Compose
+- [x] 그리드 계산 로직 & 타일 API
+- [x] 카카오맵 타일 폴리곤 렌더링
+- [x] SQLAlchemy 2.0 DB 연동 (Territory, Organization 등)
+- [x] 학교 이메일 인증 & 회원가입/로그인
+- [x] Zustand persist 자동 로그인
+- [x] 토스 스타일 인증 페이지 (Full-screen Funnel)
+- [x] 이벤트(챌린지) 페이지
+- [x] 미니게임 시스템 (가위바위보, 연타, 타이밍, 보스)
+- [ ] 프라이빗 챌린지 방
 - [ ] 실시간 점령 알림 (WebSocket)
 - [ ] PWA 설정 (오프라인, 푸시 알림)
-- [ ] 대학교별 통계 대시보드
+- [ ] 다양한 소속 챌린지 (고향, 직장, 동아리)
 
 ---
 
@@ -249,12 +261,6 @@ docker compose down -v
 |------|------|
 | 프론트엔드 | TBD |
 | 백엔드 | TBD |
-| 인프라/DevOps | TBD |
-| 디자인 | TBD |
-| 기획 | TBD |
-
----
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스를 따릅니다.
+| 풀스택 | TBD |
+| 프론트엔드 | TBD |
+| 백엔드 | TBD |

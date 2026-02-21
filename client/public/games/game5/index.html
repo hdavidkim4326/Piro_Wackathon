@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>절대 감각 스톱워치</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <h2>🥜 절대 감각 스톱워치</h2>
+        <p>정확히 <strong>10.00초</strong>에 멈추세요!<br>(9.80초 ~ 10.20초 성공 / 기회 3번 안에 성공 시 점령)</p>
+
+        <div id="game-play-area">
+            <div class="status-board">
+                <div class="chance">💖 기회: <span id="chances-left">3</span>번</div>
+                <div class="score">✔ 성공: <span id="success-count">0</span>번</div>
+            </div>
+
+            <div id="timer-display">
+                0.00
+            </div>
+            
+            <div id="result-message">타이머를 시작하세요!</div>
+
+            <button id="action-btn" disabled>타이머 시작</button>
+            
+            <div id="ready-cover">
+                 <button id="start-btn">게임 시작!</button>
+            </div>
+        </div>
+
+        <div id="result-modal" class="hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">결과</h3>
+                <p id="modal-message">메시지 내용</p>
+                <button id="modal-close-btn">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../gameBridge.js"></script>`r`n    <script src="script.js"></script>
+</body>
+</html>
