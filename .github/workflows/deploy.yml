@@ -2,7 +2,7 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main ] # main 브랜치에 push될 때 실행
+    branches: [ main, deploy ] # main/deploy 브랜치에 push될 때 실행
 
 jobs:
   deploy:
@@ -49,5 +49,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/Piro_Wackathon
-            git pull origin main
+            git pull origin ${{ github.ref_name }}
             docker compose up -d --build backend postgres
