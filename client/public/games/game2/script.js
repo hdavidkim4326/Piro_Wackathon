@@ -113,7 +113,6 @@ function endGame() {
     window.parent.postMessage({
         type: 'GAME_RESULT',
         gameId: 2,
-        score: successCount,
         success: isSuccess
     }, '*');
 }

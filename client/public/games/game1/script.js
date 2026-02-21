@@ -60,7 +60,6 @@ function endGame() {
     window.parent.postMessage({
         type: 'GAME_RESULT',
         gameId: 1,
-        score: score,
         success: isSuccess
     }, '*');
 }
