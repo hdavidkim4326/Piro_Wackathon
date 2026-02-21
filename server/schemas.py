@@ -17,6 +17,11 @@ class TileRead(BaseModel):
     grid_id: str
     owner_univ: Optional[str] = None
     level: int = 0
+    is_special: bool = False
+    special_type: Optional[str] = None  # "3x3" | "5x5"
+    in_special_zone: bool = False
+    special_zone_type: Optional[str] = None  # "3x3" | "5x5"
+    special_center_grid_id: Optional[str] = None
     polygon: list[dict[str, float]] = Field(default_factory=list)
 
 

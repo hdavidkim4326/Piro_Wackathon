@@ -21,6 +21,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from core.grid import get_viewport_grid_ids, grid_polygon
+from core.special_tiles import classify_special_tile, get_special_zone_info
 from database import get_db
 from models import (
     OccupationCategory,
@@ -114,14 +115,42 @@ def get_tiles(
     response: list[TileRead] = []
     for gid in grid_ids:
         polygon = grid_polygon(gid)
+        special = classify_special_tile(gid)
+        zone = get_special_zone_info(gid)
+        is_special = bool(special["is_special"])
+        special_type = special["special_type"]
+        in_special_zone = bool(zone["in_special_zone"])
+        special_zone_type = zone["special_zone_type"]
+        special_center_grid_id = zone["special_center_grid_id"]
+
         if gid in tile_map:
             owner, level = tile_map[gid]
             response.append(
-                TileRead(grid_id=gid, owner_univ=owner, level=level, polygon=polygon)
+                TileRead(
+                    grid_id=gid,
+                    owner_univ=owner,
+                    level=level,
+                    is_special=is_special,
+                    special_type=special_type,
+                    in_special_zone=in_special_zone,
+                    special_zone_type=special_zone_type,
+                    special_center_grid_id=special_center_grid_id,
+                    polygon=polygon,
+                )
             )
         else:
             response.append(
-                TileRead(grid_id=gid, owner_univ=None, level=0, polygon=polygon)
+                TileRead(
+                    grid_id=gid,
+                    owner_univ=None,
+                    level=0,
+                    is_special=is_special,
+                    special_type=special_type,
+                    in_special_zone=in_special_zone,
+                    special_zone_type=special_zone_type,
+                    special_center_grid_id=special_center_grid_id,
+                    polygon=polygon,
+                )
             )
 
     return response
@@ -217,9 +246,16 @@ def occupy_tile(
     db.commit()
 
     polygon = grid_polygon(body.grid_id)
+    special = classify_special_tile(body.grid_id)
+    zone = get_special_zone_info(body.grid_id)
     return TileRead(
         grid_id=body.grid_id,
         owner_univ=body.university,
         level=body.level,
+        is_special=bool(special["is_special"]),
+        special_type=special["special_type"],
+        in_special_zone=bool(zone["in_special_zone"]),
+        special_zone_type=zone["special_zone_type"],
+        special_center_grid_id=zone["special_center_grid_id"],
         polygon=polygon,
     )

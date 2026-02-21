@@ -13,6 +13,7 @@ from sqlalchemy import inspect, text
 from api.tiles import router as tiles_router
 from api.ranking import router as ranking_router
 from api.users import router as users_router
+from api.games import router as games_router
 from database import engine
 from models import Base
 
@@ -21,13 +22,24 @@ from models import Base
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
-    # 기존 users 테이블에 password_hash 컬럼이 없으면 자동 추가
+    # 기존 users 테이블에 누락 컬럼이 있으면 자동 추가
     inspector = inspect(engine)
     if "users" in inspector.get_table_names():
         columns = [col["name"] for col in inspector.get_columns("users")]
         if "password_hash" not in columns:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+        if "field" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN field JSONB"))
+
+    if "user_organizations" in inspector.get_table_names():
+        columns = [col["name"] for col in inspector.get_columns("user_organizations")]
+        if "email_verified" not in columns:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE user_organizations ADD COLUMN email_verified BOOLEAN")
+                )
 
     yield
 
@@ -52,6 +64,7 @@ app.add_middleware(
 app.include_router(tiles_router, prefix="/api", tags=["tiles"])
 app.include_router(ranking_router, prefix="/api", tags=["ranking"])
 app.include_router(users_router, prefix="/api", tags=["users"])
+app.include_router(games_router, prefix="/api", tags=["games"])
 
 
 @app.get("/health", tags=["system"])
