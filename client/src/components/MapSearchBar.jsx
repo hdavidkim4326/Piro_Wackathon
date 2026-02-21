@@ -37,7 +37,7 @@ export default function MapSearchBar({ onPickPlace }) {
     <>
       <form
         onSubmit={onSubmit}
-        className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
+        className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-5 py-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +63,7 @@ export default function MapSearchBar({ onPickPlace }) {
         <button
           type="submit"
           disabled={!canSearch}
-          className="rounded-lg px-2 py-1 text-xs font-extrabold text-indigo-600 active:bg-indigo-50 disabled:opacity-40"
+          className="shrink-0 rounded-lg px-2 py-2 text-xs font-extrabold text-indigo-600 active:bg-indigo-50 disabled:opacity-40 whitespace-nowrap"
         >
           {loading ? "검색중" : "검색"}
         </button>
