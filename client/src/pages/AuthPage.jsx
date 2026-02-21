@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../store/gameStore'
 import { sendAuthCode, verifyAuthCode, signUpUser, loginUser } from '../lib/api'
 
+const MotionDiv = motion.div
+
 // ─── 상수 ────────────────────────────────────────────────────
 const V = {
   LANDING: 'landing',
@@ -171,7 +173,7 @@ export default function AuthPage() {
                 backgroundSize: '32px 32px',
               }} />
 
-              <motion.div
+              <MotionDiv
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: 'spring', damping: 18, delay: 0.1 }}
@@ -184,7 +186,7 @@ export default function AuthPage() {
                 >
                   🗺️
                 </motion.div>
-              </motion.div>
+              </MotionDiv>
 
               <motion.div
                 initial={{ y: 20, opacity: 0 }}

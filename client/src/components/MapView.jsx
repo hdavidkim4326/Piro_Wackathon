@@ -291,7 +291,7 @@ export default function MapView({ center }) {
     const position = new window.kakao.maps.LatLng(center.lat, center.lng)
     mapRef.current.panTo(position)
     markerRef.current?.setPosition(position)
-  }, [center?.lat, center?.lng])
+  }, [center])
 
   useEffect(() => {
     return () => {

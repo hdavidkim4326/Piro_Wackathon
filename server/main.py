@@ -22,13 +22,24 @@ from models import Base
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
-    # 기존 users 테이블에 password_hash 컬럼이 없으면 자동 추가
+    # 기존 users 테이블에 누락 컬럼이 있으면 자동 추가
     inspector = inspect(engine)
     if "users" in inspector.get_table_names():
         columns = [col["name"] for col in inspector.get_columns("users")]
         if "password_hash" not in columns:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+        if "field" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN field JSONB"))
+
+    if "user_organizations" in inspector.get_table_names():
+        columns = [col["name"] for col in inspector.get_columns("user_organizations")]
+        if "email_verified" not in columns:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE user_organizations ADD COLUMN email_verified BOOLEAN")
+                )
 
     yield
 

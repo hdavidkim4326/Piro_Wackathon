@@ -8,13 +8,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Ranking from "./pages/Ranking";
 import Profile from "./pages/Profile";
+import AuthPage from "./pages/AuthPage";
 import BottomNav from "./components/BottomNav";
-
-import Home from './pages/Home'
-import Ranking from './pages/Ranking'
-import Profile from './pages/Profile'
-import AuthPage from './pages/AuthPage'
-import BottomNav from './components/BottomNav'
 
 export default function App() {
   return (
