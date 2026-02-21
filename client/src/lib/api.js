@@ -7,11 +7,12 @@
 import axios from 'axios'
 
 const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+const defaultApiBaseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:8000/api'
 const normalizedApiBaseUrl = rawApiBaseUrl
   ? (rawApiBaseUrl.endsWith('/api')
     ? rawApiBaseUrl
     : `${rawApiBaseUrl.replace(/\/$/, '')}/api`)
-  : 'http://localhost:8000/api'
+  : defaultApiBaseUrl
 
 const api = axios.create({
   baseURL: normalizedApiBaseUrl,
