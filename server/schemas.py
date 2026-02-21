@@ -69,3 +69,13 @@ class LoginResponse(BaseModel):
     success: bool
     message: str
     user: UserRead
+
+
+class UserStatsResponse(BaseModel):
+    user_id: str
+    nickname: str
+    university: str
+    capture_count: int
+    unique_capture_count: int
+    contribution_score: int
+    organization_tile_count: int
