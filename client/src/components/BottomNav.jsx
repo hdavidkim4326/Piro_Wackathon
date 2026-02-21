@@ -1,18 +1,13 @@
 /**
  * 플로팅 알약 네비게이션 바 (젠리 스타일)
- * ──────────────────────────────────────
- * 마이페이지 탭: 비로그인 → /auth로 이동.
  */
 
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import useGameStore from '../store/gameStore'
 
-const MotionNav = motion.nav
-const MotionDiv = motion.div
-
 const NAV_ITEMS = [
-  { to: '/', label: '이벤트', icon: EventIcon },
+  { to: '/events', label: '이벤트', icon: EventIcon },
   { to: '/', label: '지도', icon: MapIcon },
   { to: '/ranking', label: '랭킹', icon: TrophyIcon },
   { to: '/profile', label: '마이', icon: PersonIcon, requiresAuth: true },
@@ -26,11 +21,11 @@ export default function BottomNav() {
   if (location.pathname === '/auth') return null
 
   return (
-    <MotionNav
+    <motion.nav
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 280, delay: 0.2 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-fit min-w-[260px] bg-slate-900/88 backdrop-blur-xl border border-white/[0.08] rounded-full px-5 py-3 shadow-2xl shadow-slate-900/30 flex justify-around items-center gap-6"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-fit min-w-[280px] bg-slate-900/88 backdrop-blur-xl border border-white/[0.08] rounded-full px-5 py-3 shadow-2xl shadow-slate-900/30 flex justify-around items-center gap-5"
     >
       {NAV_ITEMS.map((item) => {
         const isActive = location.pathname === item.to
@@ -38,7 +33,7 @@ export default function BottomNav() {
 
         return (
           <NavLink
-            key={item.to}
+            key={item.label}
             to={item.to}
             onClick={(e) => {
               if (item.requiresAuth && !user) {
@@ -49,32 +44,39 @@ export default function BottomNav() {
             className="relative flex flex-col items-center gap-0.5 outline-none"
           >
             {isActive && (
-              <MotionDiv
+              <motion.div
                 layoutId="nav-active-bg"
                 className="absolute -inset-2 bg-white/[0.08] rounded-2xl"
                 transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               />
             )}
 
-            <MotionDiv
+            <motion.div
               animate={{ scale: isActive ? 1.15 : 1 }}
               transition={{ type: 'spring', damping: 15, stiffness: 300 }}
               className="relative z-10"
             >
               <Icon active={isActive} />
-            </MotionDiv>
+            </motion.div>
 
-            <span
-              className={`relative z-10 text-[10px] font-semibold transition-colors duration-200 ${
-                isActive ? 'text-white' : 'text-slate-400'
-              }`}
-            >
+            <span className={`relative z-10 text-[10px] font-semibold transition-colors duration-200 ${isActive ? 'text-white' : 'text-slate-400'}`}>
               {item.label}
             </span>
           </NavLink>
         )
       })}
-    </MotionNav>
+    </motion.nav>
+  )
+}
+
+function EventIcon({ active }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke={active ? '#fff' : '#94a3b8'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-[22px] h-[22px]">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M8 2v4M16 2v4" />
+      <circle cx="12" cy="15" r="1.5" />
+    </svg>
   )
 }
 
@@ -102,31 +104,6 @@ function PersonIcon({ active }) {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke={active ? '#fff' : '#94a3b8'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-[22px] h-[22px]">
       <circle cx="12" cy="8" r="4" />
       <path d="M20 21a8 8 0 00-16 0" />
-    </svg>
-  )
-}
-
-/** 이벤트(캘린더) 아이콘 */
-function EventIcon({ active }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={active ? "#fff" : "#94a3b8"}
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="w-[22px] h-[22px]"
-    >
-      {/* calendar frame */}
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      {/* top header line */}
-      <path d="M3 10h18" />
-      {/* rings */}
-      <path d="M8 2v4M16 2v4" />
-      {/* event dot */}
-      <circle cx="12" cy="15" r="1.5" />
     </svg>
   )
 }
