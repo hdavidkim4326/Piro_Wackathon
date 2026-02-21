@@ -14,6 +14,10 @@ const useGameStore = create(
       setUser: (user) => set({ user }),
       logout: () => set({ user: null }),
 
+      // 팀원 페이지(MyPage/ProfileEdit) 호환용 상태
+      occupiedTiles: {},
+      setOccupiedTiles: (occupiedTiles) => set({ occupiedTiles }),
+
       location: null,
       setLocation: (location) => set({ location }),
 
@@ -32,5 +36,34 @@ const useGameStore = create(
     }
   )
 )
+
+// 팀원 코드 호환을 위한 어댑터 훅
+export function useGame() {
+  const user = useGameStore((s) => s.user)
+  const setUser = useGameStore((s) => s.setUser)
+  const logout = useGameStore((s) => s.logout)
+  const occupiedTiles = useGameStore((s) => s.occupiedTiles)
+
+  const dispatch = (action) => {
+    if (!action || typeof action !== 'object') return
+    const { type, payload } = action
+    switch (type) {
+      case 'SET_USER':
+        setUser(payload || null)
+        break
+      case 'LOGOUT':
+      case 'DELETE_ACCOUNT':
+        logout()
+        break
+      default:
+        break
+    }
+  }
+
+  return {
+    state: { user, occupiedTiles },
+    dispatch,
+  }
+}
 
 export default useGameStore

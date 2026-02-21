@@ -5,50 +5,65 @@
  * 현재 위치 타일에서만 점령/강화/빼앗기 가능.
  *
  * [CSS 리디자인] 로직·클래스명 동일, 컬러만 amber-coral 팔레트로 교체
- *   #FDCC80 / #EBB865 / #DAAC5D / #E79380 / #DF7E66
+ * #FDCC80 / #EBB865 / #DAAC5D / #E79380 / #DF7E66
  */
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import { useOccupyTile } from '../hooks/useTiles'
 import TileGameModal from './TileGameModal'
+import PeanutMax from '../pages/PeanutMax'
 
 const LAT_STEP = 0.00027
 const LNG_STEP = 0.00034
 const MotionDiv = motion.div
+
+const K = {
+  emptyTile: '빈 땅',
+  territory: '영토',
+  allyTerritory: '아군 영토',
+  enemyTerritory: '적군 영토',
+  neutral: '미점령',
+  currentPosition: '현재 위치',
+  specialMission: '특수 미션',
+  special: '특수',
+  moveToTileHint:
+    '이 타일 위로 이동해야 미션을 시작할 수 있어요.',
+  enableLocationHint: ' (위치 권한을 먼저 켜주세요)',
+  occupying: '점령 중...',
+  occupy: '점령하기',
+  reinforce: '강화하기',
+  steal: '땅 빼앗기!',
+  close: '닫기',
+  tauntEmpty1: '아직 아무도 점령하지 않은 땅입니다.',
+  tauntEmpty2: '지금 선점하면 우리 학교의 거점이 됩니다.',
+  tauntEmpty3: '빈 타일 발견! 먼저 점령하세요.',
+  tauntEmpty4: '기회입니다. 빠르게 점령해 보세요.',
+  tauntEnemy1: '상대 학교 영토입니다. 빼앗아야 합니다.',
+  tauntEnemy2: '적 영토 한가운데입니다. 반격해 보세요.',
+  tauntEnemy3: '여기만 뒤집어도 흐름이 바뀝니다.',
+  tauntEnemy4: '공격 성공 시 우리 색으로 바뀝니다.',
+  tauntMine1: '우리 영토입니다. 강화해서 지켜내세요.',
+  tauntMine2: '방어를 위해 레벨을 올려두는 게 좋습니다.',
+  tauntMine3: '현재 우리 학교가 점유 중인 타일입니다.',
+}
 
 function calcGridId(lat, lng) {
   return `grid_${Math.floor(lat / LAT_STEP)}_${Math.floor(lng / LNG_STEP)}`
 }
 
 const UNIV_DOT_COLORS = {
-  서울대학교: '#3b82f6',
-  연세대학교: '#0ea5e9',
-  고려대학교: '#ef4444',
-  우리대학교: '#a855f7',
+  '서울대학교': '#3b82f6',
+  '연세대학교': '#0ea5e9',
+  '고려대학교': '#ef4444',
+  '한양대학교': '#a855f7',
 }
 
-const TAUNTS_EMPTY = [
-  '주인 없는 땅이다! 콩! 하고 점령해버려 🥜',
-  '이 땅은 너를 기다리고 있었어!',
-  '빈 땅 발견! 선점하면 전설이 된다 💥',
-  '아직 아무도 안 왔다... 지금이 기회!',
-]
-
-const TAUNTS_ENEMY = [
-  '여기가 감히 누구 땅이라고? 뺏어!',
-  '적의 영토 한복판이다... 콩! 💣',
-  '이 색깔 맘에 안 든다. 바꾸자!',
-  '적에게 빼앗기면 우리가 빼앗으면 돼!',
-]
-
-const TAUNTS_MINE = [
-  '우리 땅! 강화해서 철벽 방어하자 🛡️',
-  '잘 지키고 있지? 레벨업 가자!',
-  '이 타일은 우리가 먹었다 😤✌️',
-]
+const TAUNTS_EMPTY = [K.tauntEmpty1, K.tauntEmpty2, K.tauntEmpty3, K.tauntEmpty4]
+const TAUNTS_ENEMY = [K.tauntEnemy1, K.tauntEnemy2, K.tauntEnemy3, K.tauntEnemy4]
+const TAUNTS_MINE = [K.tauntMine1, K.tauntMine2, K.tauntMine3]
 
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -61,8 +76,11 @@ export default function TileInfoPanel() {
   const location        = useGameStore((s) => s.location)
   const navigate        = useNavigate()
   const { mutate: occupy, isPending } = useOccupyTile()
+
   const [gameOpen, setGameOpen] = useState(false)
-  const [taunt]                 = useState(() => Math.random())
+  const [specialOpen, setSpecialOpen] = useState(false)
+  const [specialTile, setSpecialTile] = useState(null)
+  const [taunt] = useState(() => Math.random())
 
   const isOwned     = Boolean(selectedTile?.owner_univ)
   const isMyTile    = isOwned && user?.university && selectedTile?.owner_univ === user.university
@@ -76,7 +94,7 @@ export default function TileInfoPanel() {
   const isAtTile = Boolean(myGridId && selectedTile && myGridId === selectedTile.grid_id)
 
   const tileColor = selectedTile?.owner_univ
-    ? (UNIV_DOT_COLORS[selectedTile.owner_univ.trim()] || '#f97316')
+    ? UNIV_DOT_COLORS[selectedTile.owner_univ.trim()] || '#f97316'
     : null
 
   const tauntText = useMemo(() => {
@@ -87,14 +105,45 @@ export default function TileInfoPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTile?.grid_id, taunt])
 
+  useEffect(() => {
+    if (!selectedTile?.is_special) return
+
+    if (!user) {
+      setSelectedTile(null)
+      navigate('/auth')
+      return
+    }
+
+    setSpecialTile(selectedTile)
+    setSpecialOpen(true)
+    setGameOpen(false)
+    setSelectedTile(null)
+  }, [navigate, selectedTile, setSelectedTile, user])
+
   const handleStartMission = () => {
-    if (!user) { navigate('/auth'); return }
+    if (!user) {
+      navigate('/auth')
+      return
+    }
+
+    if (selectedTile?.in_special_zone || selectedTile?.is_special) {
+      const centerGridId = selectedTile?.special_center_grid_id || selectedTile?.grid_id
+      setSpecialTile({
+        ...selectedTile,
+        grid_id: centerGridId,
+        special_center_grid_id: centerGridId,
+        is_special: true,
+        special_type: selectedTile?.special_type || selectedTile?.special_zone_type || '3x3',
+      })
+      setSpecialOpen(true)
+      return
+    }
+
     setGameOpen(true)
   }
 
   const handleMissionSuccess = (gridId, result = null) => {
     if (!gridId || !user) return
-    console.log('[TileInfoPanel] handleMissionSuccess:', { gridId, gameId: result?.gameId, success: result?.success })
     setGameOpen(false)
     setSelectedTile(null)
     occupy(
@@ -108,17 +157,21 @@ export default function TileInfoPanel() {
 
   const handleClose = () => {
     setGameOpen(false)
+    setSpecialOpen(false)
+    setSpecialTile(null)
     setSelectedTile(null)
   }
 
+  // game2 브랜치의 개선된 라벨 로직 적용
   const actionLabel = () => {
-    if (isPending) return '점령 중...'
-    if (!isOwned)  return '점령하기'
-    if (isMyTile)  return '강화하기'
-    return '땅 빼앗기!'
+    if (isPending) return K.occupying
+    if (selectedTile?.in_special_zone || selectedTile?.is_special) return K.specialMission
+    if (!isOwned) return K.occupy
+    if (isMyTile) return K.reinforce
+    return K.steal
   }
 
-  // ── 상태별 컬러 토큰 ─────────────────────────────────────────
+  // ── 상태별 컬러 토큰 (HEAD 브랜치의 amber-coral 디자인 유지) ─────────────────
   const statusColors = isMyTile
     ? { chipBg: 'rgba(253,204,128,0.18)', chipText: '#8A5E14', tauntBg: 'rgba(253,204,128,0.13)', tauntText: '#8A5E14' }
     : isEnemyTile
@@ -142,13 +195,12 @@ export default function TileInfoPanel() {
         >
           <div className="overflow-y-auto px-5 pt-3.5 pb-2">
 
-            {/* 드래그 핸들 */}
+            {/* 드래그 핸들 (HEAD 유지) */}
             <div
               className="mx-auto mb-4 h-[3px] w-9 rounded-full"
               style={{ background: 'rgba(218,172,93,0.35)' }}
             />
 
-            {/* ─── 헤더: 타일 이름 + 레벨 ─── */}
             <div className="mb-3 flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -165,21 +217,36 @@ export default function TileInfoPanel() {
                     className="truncate text-[17px] font-extrabold leading-tight"
                     style={{ color: '#1C1009' }}
                   >
-                    {isOwned ? `${selectedTile.owner_univ} 영토` : '빈 땅'}
+                    {isOwned ? `${selectedTile.owner_univ} ${K.territory}` : K.emptyTile}
                   </h3>
                 </div>
+                {/* game2에서 추가된 grid_id 표시 (디자인 톤 앤 매너 맞춤) */}
+                <p className="mt-0.5 text-[11px] font-medium" style={{ color: '#A08372' }}>
+                  {selectedTile.grid_id}
+                </p>
               </div>
+
+              {/* game2에서 추가된 레벨 배지 (디자인 톤 앤 매너 맞춤) */}
+              <span
+                className="shrink-0 rounded-xl px-2.5 py-1 text-[13px] font-bold"
+                style={
+                  isOwned
+                    ? { background: 'rgba(253,204,128,0.2)', color: '#B8710A' }
+                    : { background: '#F5F0E8', color: '#A08372' }
+                }
+              >
+                Lv.{selectedTile.level || 0}
+              </span>
             </div>
 
-            {/* ─── 상태 정보 칩 ─── */}
             <div className="mb-3 flex flex-wrap gap-1.5">
               <span
                 className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-bold"
                 style={{ background: statusColors.chipBg, color: statusColors.chipText }}
               >
                 {isOwned
-                  ? isMyTile ? '🏠 아군 영토' : '⚔️ 적군 영토'
-                  : '🏳️ 미점령'}
+                  ? isMyTile ? `🏠 ${K.allyTerritory}` : `⚔️ ${K.enemyTerritory}`
+                  : `🏳️ ${K.neutral}`}
               </span>
 
               {isAtTile && (
@@ -187,7 +254,7 @@ export default function TileInfoPanel() {
                   className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-bold"
                   style={{ background: 'rgba(223,126,102,0.12)', color: '#DF7E66' }}
                 >
-                  📍 현재 위치
+                  📍 {K.currentPosition}
                 </span>
               )}
 
@@ -196,7 +263,7 @@ export default function TileInfoPanel() {
                   className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-bold"
                   style={{ background: 'rgba(235,184,101,0.14)', color: '#B8710A' }}
                 >
-                  ⭐ 특수 {selectedTile.special_type || '3x3'}
+                  ⭐ {K.special} {selectedTile.special_type || '3x3'}
                 </span>
               )}
             </div>
@@ -209,7 +276,6 @@ export default function TileInfoPanel() {
               {tauntText}
             </div>
 
-            {/* ─── 위치 안내 (현재 타일 아닐 때) ─── */}
             {!isAtTile && (
               <div
                 className="mb-4 rounded-2xl px-4 py-3 text-[12px] font-medium"
@@ -219,12 +285,11 @@ export default function TileInfoPanel() {
                   border:     '1px solid rgba(235,184,101,0.22)',
                 }}
               >
-                📌 이 타일로 이동해야 점령할 수 있어요.
-                {!location && ' (위치를 먼저 켜주세요)'}
+                📌 {K.moveToTileHint}
+                {!location && K.enableLocationHint}
               </div>
             )}
 
-            {/* ─── 액션 버튼 ─── */}
             <div className="flex gap-2.5">
               <button
                 onClick={handleStartMission}
@@ -247,7 +312,7 @@ export default function TileInfoPanel() {
                 className="shrink-0 rounded-2xl px-5 py-3.5 text-[15px] font-bold transition-all active:scale-[0.97]"
                 style={{ background: '#F5F0E8', color: '#8A7060' }}
               >
-                닫기
+                {K.close}
               </button>
             </div>
 
@@ -255,7 +320,6 @@ export default function TileInfoPanel() {
         </MotionDiv>
       )}
 
-      {/* 미니게임 모달 */}
       {gameOpen && selectedTile && (
         <TileGameModal
           key={selectedTile.grid_id}
@@ -264,6 +328,20 @@ export default function TileInfoPanel() {
           onMissionSuccess={handleMissionSuccess}
         />
       )}
+
+      <PeanutMax
+        open={specialOpen}
+        tile={specialTile}
+        onClose={() => {
+          setSpecialOpen(false)
+          setSpecialTile(null)
+        }}
+        onCaptureSuccess={(payload) => {
+          console.log('[TileInfoPanel] special mission success:', payload)
+          setSpecialOpen(false)
+          setSpecialTile(null)
+        }}
+      />
     </AnimatePresence>
   )
 }
