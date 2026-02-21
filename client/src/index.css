@@ -1,17 +1,17 @@
 /* ─── Tailwind CSS v4 진입점 ────────────────────────────── */
 @import "tailwindcss";
 
-/* ─── 커스텀 CSS 변수 (게임 테마) ─────────────────────────── */
+/* ─── 커스텀 CSS 변수 (라이트 게이미피드 테마) ────────────── */
 @theme {
   --color-primary: #6366f1;
   --color-primary-dark: #4f46e5;
   --color-secondary: #f59e0b;
   --color-danger: #ef4444;
   --color-success: #22c55e;
-  --color-surface: #1e1e2e;
-  --color-surface-light: #2a2a3e;
-  --color-text-primary: #e2e8f0;
-  --color-text-secondary: #94a3b8;
+
+  --color-glass: rgba(255, 255, 255, 0.85);
+  --color-glass-heavy: rgba(255, 255, 255, 0.95);
+  --color-glass-nav: rgba(15, 23, 42, 0.88);
 }
 
 /* ─── 글로벌 스타일 ──────────────────────────────────────── */
@@ -28,13 +28,26 @@ body,
 #root {
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 body {
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, sans-serif;
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f1f5f9;
+  color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── 커스텀 스크롤바 (얇고 둥글게) ──────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
 }

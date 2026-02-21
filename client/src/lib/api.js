@@ -8,7 +8,6 @@
 import axios from 'axios'
 
 // ─── Axios 인스턴스 생성 ────────────────────────────────────
-// 모든 API 요청은 이 인스턴스를 통해 보낸다.
 const api = axios.create({
   baseURL: 'http://localhost:8000/api',
   timeout: 10000,
@@ -25,7 +24,7 @@ const api = axios.create({
  * @param {number} bounds.maxLat - 북쪽 경계 위도
  * @param {number} bounds.minLng - 서쪽 경계 경도
  * @param {number} bounds.maxLng - 동쪽 경계 경도
- * @returns {Promise<Array>} 타일 정보 배열
+ * @returns {Promise<Array>} TileRead 배열
  */
 export async function fetchTiles({ minLat, maxLat, minLng, maxLng }) {
   const response = await api.get('/tiles', {
@@ -45,12 +44,27 @@ export async function fetchTiles({ minLat, maxLat, minLng, maxLng }) {
  * @param {object} payload - 점령 요청 데이터
  * @param {string} payload.gridId - 점령할 그리드 ID
  * @param {string} payload.university - 점령하는 대학교 이름
- * @returns {Promise<object>} 점령 결과 응답
+ * @param {number} [payload.level=1] - 초기 점령 레벨
+ * @returns {Promise<object>} TileRead 응답
  */
-export async function occupyTile({ gridId, university }) {
+export async function occupyTile({ gridId, university, level = 1 }) {
   const response = await api.post('/occupy', {
     grid_id: gridId,
     university,
+    level,
+  })
+  return response.data
+}
+
+/**
+ * 대학교별 점령 랭킹을 서버에서 가져온다.
+ *
+ * @param {number} [limit=10] - 가져올 최대 순위 수
+ * @returns {Promise<Array<{rank: number, university: string, tile_count: number}>>}
+ */
+export async function fetchRanking(limit = 10) {
+  const response = await api.get('/ranking', {
+    params: { limit },
   })
   return response.data
 }
