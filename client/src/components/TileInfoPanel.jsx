@@ -147,7 +147,7 @@ export default function TileInfoPanel() {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-          className="fixed inset-x-0 bottom-0 z-[55] rounded-t-3xl border-t border-slate-200/80 bg-white pb-[max(env(safe-area-inset-bottom),16px)] shadow-2xl"
+          className="fixed left-1/2 -translate-x-1/2 bottom-[120px] w-[calc(100%-2rem)] max-w-[430px] z-[55] rounded-t-3xl border-t border-slate-200/80 bg-white pb-[max(env(safe-area-inset-bottom),16px)] shadow-2xl"
           style={{ maxHeight: '70dvh' }}
         >
           <div className="overflow-y-auto px-5 pt-3 pb-2">
