@@ -1,6 +1,18 @@
+"""
+유저 API 라우터 — 동기 버전
+─────────────────────────
+이메일 인증 + 회원가입 엔드포인트.
+DB 팀원의 SQLAlchemy 2.0 모델(User, Organization, UserOrganization)에 맞게 전환.
+
+[매핑]
+  프론트 nickname  →  User.user_name
+  프론트 university →  Organization.org_name (이메일 도메인에서 추출)
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from config import settings
 from core.email_verification import (
@@ -15,11 +27,18 @@ from core.email_verification import (
     store_auth_code,
     verify_auth_code,
 )
-from database import get_session
-from models import User, UserRead
+from database import get_db
+from models import OccupationCategory, Organization, User, UserOrganization
+from schemas import UserRead
 
 router = APIRouter()
 
+DEFAULT_CATEGORY_NAME = "대학교"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  스키마
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 class VerifyEmailRequest(BaseModel):
     action: str
@@ -46,8 +65,13 @@ class SignupSubmitResponse(BaseModel):
     user: UserRead
 
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  엔드포인트
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 @router.post("/users/verify-email/", response_model=VerifyEmailResponse)
-async def verify_email(body: VerifyEmailRequest):
+def verify_email(body: VerifyEmailRequest):
+    """이메일 인증 코드 발송/검증 (DB 미사용, 인메모리 캐시)"""
     email = normalize_email(body.email)
     if not is_valid_email(email):
         raise HTTPException(status_code=400, detail="Invalid email format.")
@@ -77,8 +101,7 @@ async def verify_email(body: VerifyEmailRequest):
         if not body.code:
             raise HTTPException(status_code=400, detail="Verification code is required.")
 
-        code = body.code.strip()
-        if not verify_auth_code(email, code):
+        if not verify_auth_code(email, body.code.strip()):
             raise HTTPException(status_code=400, detail="Invalid or expired code.")
 
         university = extract_university(email)
@@ -97,10 +120,17 @@ async def verify_email(body: VerifyEmailRequest):
 
 
 @router.post("/users/signup/submit/", response_model=SignupSubmitResponse)
-async def signup_submit(
+def signup_submit(
     body: SignupSubmitRequest,
-    session: AsyncSession = Depends(get_session),
+    db: Session = Depends(get_db),
 ):
+    """
+    회원가입.
+    1. 인증된 이메일에서 대학교를 추출
+    2. User 생성 (user_name = nickname, email)
+    3. Organization 연결 (get or create)
+    4. UserOrganization 관계 생성
+    """
     email = normalize_email(body.email)
     if not is_valid_email(email):
         raise HTTPException(status_code=400, detail="Invalid email format.")
@@ -125,10 +155,39 @@ async def signup_submit(
             detail="University does not match verified email domain.",
         )
 
-    user = User(nickname=nickname, university=verified_university)
-    session.add(user)
-    await session.commit()
-    await session.refresh(user)
+    # ── User 생성 ────────────────────────────────────────────
+    user = User(user_name=nickname, email=email)
+    db.add(user)
+    db.flush()
+
+    # ── Organization get/create ──────────────────────────────
+    category = db.execute(
+        select(OccupationCategory).where(OccupationCategory.name == DEFAULT_CATEGORY_NAME)
+    ).scalar_one_or_none()
+
+    if not category:
+        category = OccupationCategory(name=DEFAULT_CATEGORY_NAME)
+        db.add(category)
+        db.flush()
+
+    org = db.execute(
+        select(Organization).where(
+            Organization.org_name == verified_university,
+            Organization.category_id == category.category_id,
+        )
+    ).scalar_one_or_none()
+
+    if not org:
+        org = Organization(org_name=verified_university, category_id=category.category_id)
+        db.add(org)
+        db.flush()
+
+    # ── UserOrganization 관계 생성 ───────────────────────────
+    user_org = UserOrganization(user_id=user.user_id, org_id=org.org_id)
+    db.add(user_org)
+
+    db.commit()
+    db.refresh(user)
 
     clear_verification_state(email)
 
@@ -136,9 +195,9 @@ async def signup_submit(
         success=True,
         message="Signup complete.",
         user=UserRead(
-            id=user.id,
-            nickname=user.nickname,
-            university=user.university,
-            created_at=user.created_at,
+            id=str(user.user_id),
+            nickname=user.user_name,
+            university=verified_university,
+            created_at=user.created_at.isoformat(),
         ),
     )
