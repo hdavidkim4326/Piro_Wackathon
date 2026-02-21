@@ -51,12 +51,19 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd ~/Piro_Wackathon
             git pull origin ${{ github.ref_name }}
             
             # Github Secrets를 이용해 EC2의 server 폴더 안에 .env 파일을 동적으로 생성합니다.
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > ./server/.env
-            echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> ./server/.env
+            mkdir -p ./server
+            cat > ./server/.env <<EOF
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            EOF
+            chmod 600 ./server/.env
             
-            # 불필요한 postgres를 빼고 오직 backend만 빌드하고 재실행합니다.
-            docker compose up -d --build backend
+            # 과거 설정으로 떠 있을 수 있는 불필요 컨테이너를 정리하고 backend만 재실행합니다.
+            docker compose stop frontend 2>/dev/null || true
+            docker compose rm -f frontend postgres 2>/dev/null || true
+            docker compose up -d --build --remove-orphans backend
