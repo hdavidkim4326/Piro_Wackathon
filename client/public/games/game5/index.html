@@ -3,30 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>5?④퀎: 5.00珥??ㅽ넲?뚯튂</title>
+    <title>절대 감각 스톱워치</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <h2>?깍툘 5?④퀎: ?덈? 媛먭컖 ?ㅽ넲?뚯튂</h2>
-        <p>?뺥솗??<strong>5.00珥?/strong>??硫덉텛?몄슂!<br>(4.80珥?~ 5.20珥??깃났 / 3踰?以?1踰??깃났 ???먮졊)</p>
+    <div id="game-container">
+        <h2>🥜 절대 감각 스톱워치</h2>
+        <p>정확히 <strong>10.00초</strong>에 멈추세요!<br>(9.80초 ~ 10.20초 성공 / 기회 3번 안에 성공 시 점령)</p>
 
-        <div class="status-board">
-            <div class="chance">?뮇 ?⑥? 湲고쉶: <span id="chances-left">3</span>踰?/div>
-            <div class="score">???깃났: <span id="success-count">0</span>踰?/div>
+        <div id="game-play-area">
+            <div class="status-board">
+                <div class="chance">💖 기회: <span id="chances-left">3</span>번</div>
+                <div class="score">✔ 성공: <span id="success-count">0</span>번</div>
+            </div>
+
+            <div id="timer-display">
+                0.00
+            </div>
+            
+            <div id="result-message">타이머를 시작하세요!</div>
+
+            <button id="action-btn" disabled>타이머 시작</button>
+            
+            <div id="ready-cover">
+                 <button id="start-btn">게임 시작!</button>
+            </div>
         </div>
 
-        <div id="timer-display">
-            0.00
-        </div>
-        
-        <div id="result-message">??대㉧瑜??쒖옉?섏꽭??</div>
-
-        <button id="action-btn" disabled>??대㉧ ?쒖옉</button>
-        
-        <div id="ready-cover">
-             <button id="start-btn">寃뚯엫 ?쒖옉!</button>
+        <div id="result-modal" class="hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">결과</h3>
+                <p id="modal-message">메시지 내용</p>
+                <button id="modal-close-btn">확인</button>
+            </div>
         </div>
     </div>
 
