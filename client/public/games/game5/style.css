@@ -1,0 +1,122 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Pretendard', sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+#game-wrapper {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 320px;
+    position: relative;
+}
+
+h2 { margin-top: 0; margin-bottom: 10px; color: #333; font-size: 20px; }
+p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
+
+.status-board {
+    display: flex;
+    justify-content: space-between;
+    background: #f1f3f5;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.chance { color: #ff6b6b; }
+.score { color: #20c997; }
+
+/* ⏱️ 거대한 타이머 화면 */
+#timer-display {
+    font-size: 60px;
+    font-weight: 900;
+    font-family: monospace; /* 숫자가 떨리지 않게 고정폭 폰트 사용 */
+    color: #333;
+    background: #e9ecef;
+    padding: 30px 0;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    transition: background 0.3s;
+}
+
+/* 블라인드(숫자 가려짐) 모드일 때 효과 */
+#timer-display.blind {
+    background: #343a40;
+    color: #f1f3f5;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+/* 결과 메시지 (성공/실패/안내) */
+#result-message {
+    height: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #868e96;
+    margin-bottom: 20px;
+}
+
+/* 🔘 메인 액션 버튼 */
+#action-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #4dabf7, #3bc9db);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(77,171,247,0.4);
+    transition: transform 0.1s;
+}
+
+#action-btn:active {
+    transform: scale(0.95);
+}
+
+#action-btn:disabled {
+    background: #ced4da;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#action-btn.stop-mode {
+    background: linear-gradient(135deg, #ff6b6b, #f03e3e);
+    box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+}
+
+/* 시작 전 커버 */
+#ready-cover {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.8);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+}
+
+#start-btn {
+    padding: 12px 24px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}

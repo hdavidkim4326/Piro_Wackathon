@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>8단계: 도서관 정숙 게이지</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <h2>🤫 8단계: 도서관 매너</h2>
+        <p>15초 동안 소음 게이지를<br>초록색 영역(30~70)에 유지하세요!</p>
+
+        <div class="status-board">
+            <div class="time">⏱ 버틴 시간: <span id="time-left">15</span>초</div>
+        </div>
+
+        <div id="gauge-container">
+            <div id="safe-zone"></div>
+            <div id="noise-bar"></div>
+        </div>
+
+        <div id="feedback-text">게이지가 차오릅니다!</div>
+
+        <button id="shh-btn" disabled>쉿! (소음 감소)</button>
+        
+        <div id="ready-cover">
+             <button id="start-btn">게임 시작!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -3,23 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3단계: 로고 받아먹기</title>
+    <title>4단계: 캠퍼스 짝맞추기</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="game-wrapper">
-        <h2>🏫 3단계: 로고 받아먹기</h2>
-        <p>우리 학교(🏫)는 받고,<br>폭탄(💣)은 피하세요! (목표: 150점)</p>
+        <h2>🃏 4단계: 캠퍼스 짝맞추기</h2>
+        <p>20초 안에 6쌍의 짝을 모두 찾으세요!</p>
 
         <div class="status-board">
-            <div class="time">⏱ 남은 시간: <span id="time-left">30</span>초</div>
-            <div class="score">⭐ 점수: <span id="current-score">0</span>점</div>
+            <div class="time">⏱ 남은 시간: <span id="time-left">20</span>초</div>
+            <div class="score">✔ 맞춘 갯수: <span id="match-count">0</span>/6</div>
         </div>
 
-        <div id="game-area">
-            <div id="catcher">🧺</div>
-            </div>
+        <div id="card-grid"></div>
         
         <div id="ready-cover">
              <button id="start-btn">게임 시작!</button>
