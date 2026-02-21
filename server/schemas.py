@@ -25,6 +25,13 @@ class TileRead(BaseModel):
     polygon: list[dict[str, float]] = Field(default_factory=list)
 
 
+class SpecialCenterRead(BaseModel):
+    grid_id: str
+    special_type: str  # "3x3" | "5x5"
+    lat: float
+    lng: float
+
+
 class TileOccupyRequest(BaseModel):
     grid_id: str
     university: str
@@ -62,3 +69,13 @@ class LoginResponse(BaseModel):
     success: bool
     message: str
     user: UserRead
+
+
+class UserStatsResponse(BaseModel):
+    user_id: str
+    nickname: str
+    university: str
+    capture_count: int
+    unique_capture_count: int
+    contribution_score: int
+    organization_tile_count: int

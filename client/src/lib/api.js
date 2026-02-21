@@ -21,9 +21,20 @@ export async function fetchTiles({ minLat, maxLat, minLng, maxLng }) {
   return res.data
 }
 
-export async function occupyTile({ gridId, university, level = 1 }) {
-  const res = await api.post('/occupy', { grid_id: gridId, university, level })
+export async function fetchSpecialCenters({ minLat, maxLat, minLng, maxLng }) {
+  const res = await api.get('/special-centers', {
+    params: { min_lat: minLat, max_lat: maxLat, min_lng: minLng, max_lng: maxLng },
+  })
   return res.data
+}
+
+// ─── 2. 총괄님이 작성한 점령 API + 유저 ID 헤더 전송 (유지 및 보완) ───
+export async function occupyTile({ gridId, university, level = 1, userId = null }) {
+  // 로그인한 유저의 ID가 있으면 HTTP 헤더(X-User-Id)에 실어서 보냅니다.
+  const headers = userId ? { 'X-User-Id': String(userId) } : {}
+  
+  const res = await api.post('/occupy', { grid_id: gridId, university, level }, { headers })
+  return res.data // (잘렸던 return 구문 복구)
 }
 
 // ━━━ 랭킹 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -52,6 +63,13 @@ export async function signUpUser({ email, nickname, password }) {
 
 export async function loginUser({ email, password }) {
   const res = await api.post('/login', { email, password })
+  return res.data
+}
+
+export async function fetchMyStats(userId) {
+  const res = await api.get('/users/me/stats', {
+    headers: { 'X-User-Id': String(userId) },
+  })
   return res.data
 }
 
@@ -100,6 +118,18 @@ export async function claimTileGame(gridId, sessionId) {
     session_id: sessionId,
   })
   return response.data
+}
+
+/**
+ * Create websocket connection for boss game realtime updates.
+ *
+ * @param {string} gridId
+ */
+export function createBossGameSocket(gridId) {
+  const apiUrl = new URL(api.defaults.baseURL, window.location.origin)
+  const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsBase = `${wsProtocol}//${apiUrl.host}`
+  return new WebSocket(`${wsBase}/api/games/${gridId}/ws`)
 }
 
 export default api

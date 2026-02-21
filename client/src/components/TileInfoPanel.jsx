@@ -14,6 +14,7 @@ import TileGameModal from './TileGameModal'
 
 const LAT_STEP = 0.00027
 const LNG_STEP = 0.00034
+const MotionDiv = motion.div
 
 function calcGridId(lat, lng) {
   return `grid_${Math.floor(lat / LAT_STEP)}_${Math.floor(lng / LNG_STEP)}`
@@ -91,18 +92,35 @@ export default function TileInfoPanel() {
     setGameOpen(true)
   }
 
-  const handleGameSuccess = (result) => {
-    if (!selectedTile || !user) return
+  const handleMissionSuccess = (gridId, result = null) => {
+    if (!gridId || !user) return
+
+    console.log('[TileInfoPanel] handleMissionSuccess:', {
+      gridId,
+      gameId: result?.gameId,
+      success: result?.success,
+    })
+
+    // 성공 즉시 게임 모달을 닫고, 점령 API 체인으로 넘긴다.
+    setGameOpen(false)
+    setSelectedTile(null)
+
     occupy(
       {
-        gridId: selectedTile.grid_id,
+        gridId,
         university: user.university,
         level: Math.max(1, Number(result?.gameLevel || 1)),
+        userId: user.id,
       },
       {
         onSuccess: () => {
-          setGameOpen(false)
-          setSelectedTile(null)
+          console.log('[TileInfoPanel] occupy API completed:', { gridId })
+        },
+        onError: (error) => {
+          console.error('[TileInfoPanel] occupy API failed:', {
+            gridId,
+            error: error?.message,
+          })
         },
       }
     )
@@ -123,7 +141,7 @@ export default function TileInfoPanel() {
   return (
     <AnimatePresence>
       {selectedTile && (
-        <motion.div
+        <MotionDiv
           key="tile-panel"
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
@@ -230,15 +248,16 @@ export default function TileInfoPanel() {
               </button>
             </div>
           </div>
-        </motion.div>
+        </MotionDiv>
       )}
 
       {/* 미니게임 모달 */}
       {gameOpen && selectedTile && (
         <TileGameModal
+          key={selectedTile.grid_id}
           tile={selectedTile}
           onClose={() => setGameOpen(false)}
-          onSuccess={handleGameSuccess}
+          onMissionSuccess={handleMissionSuccess}
         />
       )}
     </AnimatePresence>

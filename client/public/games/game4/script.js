@@ -1,4 +1,4 @@
-let timeLeft = 20;
+﻿let timeLeft = 20;
 let matchedPairs = 0;
 const GOAL_PAIRS = 6;
 let timerId;

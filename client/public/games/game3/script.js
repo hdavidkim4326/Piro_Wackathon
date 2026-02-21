@@ -1,4 +1,4 @@
-let score = 0;
+﻿let score = 0;
 let timeLeft = 30;
 const GOAL_SCORE = 150; 
 

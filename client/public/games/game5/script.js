@@ -39,7 +39,7 @@ function prepareRound() {
     resultMessage.textContent = "준비가 되면 타이머를 시작하세요!";
     resultMessage.style.color = "#8d6e63";
 
-    actionBtn.textContent = "타이머 시작!";
+    actionBtn.textContent = "??대㉧ ?쒖옉!";
     actionBtn.classList.remove('stop-mode');
     actionBtn.disabled = false;
     isRunning = false;
@@ -54,7 +54,7 @@ function startTimer() {
     isRunning = true;
     startTime = Date.now();
 
-    actionBtn.textContent = "멈춤!!";
+    actionBtn.textContent = "硫덉땄!!";
     actionBtn.classList.add('stop-mode');
     resultMessage.textContent = "10.00초에 맞게 멈추세요!";
 
