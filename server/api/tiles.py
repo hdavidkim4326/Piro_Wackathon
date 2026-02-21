@@ -16,7 +16,7 @@ DB 팀원의 SQLAlchemy 2.0 모델(Territory, TerritoryStatus, Organization)을
 
 import uuid
 from datetime import datetime, timezone
-
+from core.special_tiles import get_special_centers_in_bounds
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import and_, select, func
 from sqlalchemy.exc import SQLAlchemyError

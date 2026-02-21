@@ -6,7 +6,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Events from './pages/Events'
 import Ranking from './pages/Ranking'
-import Profile from './pages/Profile'
+import MyPage from './pages/MyPage'
+import ProfileEdit from './pages/ProfileEdit'
 import AuthPage from './pages/AuthPage'
 import BottomNav from './components/BottomNav'
 
@@ -25,7 +26,8 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/events" element={<Events />} />
             <Route path="/ranking" element={<Ranking />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<MyPage />} />
+            <Route path="/profile-edit" element={<ProfileEdit />} />
             <Route path="/auth" element={<AuthPage />} />
           </Routes>
           <BottomNav />
