@@ -69,4 +69,32 @@ export async function fetchRanking(limit = 10) {
   return response.data
 }
 
+/**
+ * School email verification flow endpoint.
+ *
+ * @param {{action: 'send_email'|'check_number', email: string, code?: string}} payload
+ */
+export async function verifySchoolEmail({ action, email, code }) {
+  const response = await api.post('/users/verify-email/', {
+    action,
+    email,
+    code,
+  })
+  return response.data
+}
+
+/**
+ * Final signup submission after verification.
+ *
+ * @param {{email: string, nickname: string, university?: string}} payload
+ */
+export async function submitSignup({ email, nickname, university }) {
+  const response = await api.post('/users/signup/submit/', {
+    email,
+    nickname,
+    university,
+  })
+  return response.data
+}
+
 export default api

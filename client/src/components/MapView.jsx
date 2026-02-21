@@ -10,6 +10,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import useGameStore from '../store/gameStore'
 
+const MotionDiv = motion.div
+
 // ─── 그리드 크기 상수 (도 단위, ~30m) ───────────────────────
 const LAT_STEP = 0.00027
 const LNG_STEP = 0.00034
@@ -238,19 +240,19 @@ export default function MapView({ center }) {
             }}
           />
 
-          <motion.div
+          <MotionDiv
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', damping: 20, delay: 0.2 }}
             className="relative z-10 text-center px-8"
           >
-            <motion.div
+            <MotionDiv
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-white/80 backdrop-blur-sm shadow-lg shadow-indigo-500/10 border border-white/60 flex items-center justify-center text-4xl"
             >
               🗺️
-            </motion.div>
+            </MotionDiv>
 
             <h2 className="text-xl font-extrabold text-slate-700 tracking-tight mb-2">
               지도 로딩 대기중
@@ -268,7 +270,7 @@ export default function MapView({ center }) {
                 <span>📍 {center.lat.toFixed(6)}, {center.lng.toFixed(6)}</span>
               </div>
             )}
-          </motion.div>
+          </MotionDiv>
         </div>
       )}
     </div>
