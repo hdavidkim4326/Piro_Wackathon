@@ -219,19 +219,27 @@ export default function MapView({ center }) {
     return () => clearInterval(checkKakaoReady);
   }, []);
 
-  // ─── 내 위치 갱신 시 지도 중심 이동 ────────────────────────
+  // ─── 내 위치 갱신 시 지도 부드럽게 이동 (덜덜거림 방지 완벽 해결) ─────────────
   useEffect(() => {
-    if (!mapRef.current || !window.kakao?.maps) return;
+    // 1. 지도나 센터 값이 아직 없으면 실행하지 않음 (안전성)
+    if (!mapRef.current || !window.kakao?.maps || !center) return;
 
     const currentCenter = mapRef.current.getCenter();
-    if (Math.abs(currentCenter.getLat() - center.lat) > 0.0001 ||
-        Math.abs(currentCenter.getLng() - center.lng) > 0.0001) {
-      const position = new window.kakao.maps.LatLng(center.lat, center.lng);
-      mapRef.current.setCenter(position);
-      markerRef.current?.setPosition(position);
-    }
-  }, [center.lat, center.lng]);
+    const dLat = Math.abs(currentCenter.getLat() - center.lat);
+    const dLng = Math.abs(currentCenter.getLng() - center.lng);
 
+    // 2. GPS 튀는 현상(덜덜거림) 방지 (위/경도 차이가 0.0001 미만이면 무시)
+    // 0.0001은 실제 거리로 약 10m 정도이므로, 걸어갈 때만 지도가 따라오게 만듭니다.
+    if (dLat < 0.0001 && dLng < 0.0001) return;
+
+    const position = new window.kakao.maps.LatLng(center.lat, center.lng);
+
+    // 3. UX 최적화: 뚝뚝 끊기는 setCenter 대신 부드러운 panTo 사용
+    mapRef.current.panTo(position);
+
+    // 4. 중앙 마커도 새로운 위치로 이동
+    markerRef.current?.setPosition(position);
+  }, [center?.lat, center?.lng]);
   // ─── 언마운트 시 리소스 정리 ────────────────────────────────
   useEffect(() => {
     return () => {
