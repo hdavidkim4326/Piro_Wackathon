@@ -28,11 +28,6 @@ export async function fetchTiles({ minLat, maxLat, minLng, maxLng }) {
   return res.data
 }
 
-<<<<<<< HEAD
-export async function occupyTile({ gridId, university, level = 1, userId = null }) {
-  const headers = userId ? { 'X-User-Id': String(userId) } : {}
-  const res = await api.post('/occupy', { grid_id: gridId, university, level }, { headers })
-=======
 export async function fetchSpecialCenters({ minLat, maxLat, minLng, maxLng }) {
   const res = await api.get('/special-centers', {
     params: { min_lat: minLat, max_lat: maxLat, min_lng: minLng, max_lng: maxLng },
@@ -40,10 +35,13 @@ export async function fetchSpecialCenters({ minLat, maxLat, minLng, maxLng }) {
   return res.data
 }
 
-export async function occupyTile({ gridId, university, level = 1 }) {
-  const res = await api.post('/occupy', { grid_id: gridId, university, level })
->>>>>>> cf39f88a3dff96aa5e5e8d9d5279cd53831cb650
-  return res.data
+// ─── 2. 총괄님이 작성한 점령 API + 유저 ID 헤더 전송 (유지 및 보완) ───
+export async function occupyTile({ gridId, university, level = 1, userId = null }) {
+  // 로그인한 유저의 ID가 있으면 HTTP 헤더(X-User-Id)에 실어서 보냅니다.
+  const headers = userId ? { 'X-User-Id': String(userId) } : {}
+  
+  const res = await api.post('/occupy', { grid_id: gridId, university, level }, { headers })
+  return res.data // (잘렸던 return 구문 복구)
 }
 
 // ━━━ 랭킹 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -16,23 +16,15 @@ DB 팀원의 SQLAlchemy 2.0 모델(Territory, TerritoryStatus, Organization)을
 
 import uuid
 from datetime import datetime, timezone
-
+from core.special_tiles import get_special_centers_in_bounds
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import and_, select, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from core.grid import get_viewport_grid_ids, grid_polygon
-<<<<<<< HEAD
 from core.mission import ensure_default_mission, get_default_mission
 from core.special_tiles import classify_special_tile, get_special_zone_info
-=======
-from core.special_tiles import (
-    classify_special_tile,
-    get_special_centers_in_bounds,
-    get_special_zone_info,
-)
->>>>>>> cf39f88a3dff96aa5e5e8d9d5279cd53831cb650
 from database import get_db
 from models import (
     OccupationCategory,

@@ -1,35 +1,45 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>8?④퀎: ?꾩꽌愿 ?뺤닕 寃뚯씠吏</title>
+    <title>조용조용 땅콩</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <h2>?ㄻ 8?④퀎: ?꾩꽌愿 留ㅻ꼫</h2>
-        <p>15珥??숈븞 ?뚯쓬 寃뚯씠吏瑜?br>珥덈줉???곸뿭(30~70)???좎??섏꽭??</p>
+    <div id="game-container">
+        <h2>🥜 조용조용 땅콩</h2>
+        <p>15초 동안 소음 게이지를<br>초록색 영역(30~70)에 유지하세요!</p>
 
-        <div class="status-board">
-            <div class="time">??踰꾪떞 ?쒓컙: <span id="time-left">15</span>珥?/div>
+        <div id="game-play-area">
+            <div class="status-board">
+                <div class="time">⏱ 버틴 시간: <span id="time-left">15</span>초</div>
+            </div>
+
+            <div id="gauge-container">
+                <div id="safe-zone"></div>
+                <div id="noise-bar"></div>
+            </div>
+
+            <div id="feedback-text">게이지가 차오릅니다!</div>
+
+            <button id="shh-btn" disabled>쉿! (소음 감소)</button>
+            
+            <div id="ready-cover">
+                 <button id="start-btn">게임 시작!</button>
+            </div>
         </div>
 
-        <div id="gauge-container">
-            <div id="safe-zone"></div>
-            <div id="noise-bar"></div>
-        </div>
-
-        <div id="feedback-text">寃뚯씠吏媛 李⑥삤由낅땲??</div>
-
-        <button id="shh-btn" disabled>?? (?뚯쓬 媛먯냼)</button>
-        
-        <div id="ready-cover">
-             <button id="start-btn">寃뚯엫 ?쒖옉!</button>
+        <div id="result-modal" class="hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">결과</h3>
+                <p id="modal-message">메시지 내용</p>
+                <button id="modal-close-btn">확인</button>
+            </div>
         </div>
     </div>
 
-    <script src="../gameBridge.js"></script>`r`n    <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
