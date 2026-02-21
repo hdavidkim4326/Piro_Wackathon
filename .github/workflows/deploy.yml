@@ -2,45 +2,52 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main ] # main 브랜치에 push될 때 실행
+    branches: [ main, deploy ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 1. 프론트엔드 빌드 및 S3 업로드
+      # 1) 프론트엔드 빌드 및 S3 배포
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20' # Vite가 요구하는 20버전 이상으로 설정
-          cache: 'npm'       # npm 캐시를 사용하면 다음 빌드부터 훨씬 빨라집니다.
-          cache-dependency-path: client/package-lock.json # 캐시 기준 파일 경로
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
 
-      - name: Install & Build Client
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build client
+        working-directory: client
         run: |
-          cd client
-          npm install
           npm run build
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
       - name: Deploy to S3
-        run: |
-          aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        run: aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
       - name: CloudFront Invalidation
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
 
-      # 2. EC2 백엔드 배포 (SSH 접속 후 git pull & docker compose)
+      # 2) EC2 백엔드 배포
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -48,6 +55,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd ~/Piro_Wackathon
-            git pull origin main
-            docker compose up -d --build backend postgres
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose up -d --build backend
+#           # ✅ 프론트엔드는 S3에서 바로 배포하므로 EC2에서는 백엔드만 재시작, docker compose 명령어도 backend 서비스만 타겟팅
