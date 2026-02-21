@@ -1,46 +1,56 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>9?④퀎: ?됱긽 ?욊린</title>
+    <title>색상 섞기</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <h2>?렓 9?④퀎: ?됱긽 ?욊린</h2>
-        <p>湲곕낯 ?됱긽???욎뼱 紐⑺몴 ?됱긽??留뚮뱶?몄슂!</p>
+    <div id="game-container">
+        <h2>🥜 색상 섞기</h2>
+        <p>기본 색상을 섞어 목표 색상을 만드세요!</p>
 
-        <div class="status-board">
-            <div class="time">???⑥? ?쒓컙: <span id="time-left">10</span>珥?/div>
-            <div class="score">???꾩꽦: <span id="current-score">0</span>/7</div>
+        <div id="game-play-area">
+            <div class="status-board">
+                <div class="time">⏱ 남은 시간: <span id="time-left">10</span>초</div>
+                <div class="score">✔ 완성: <span id="current-score">0</span>/7</div>
+            </div>
+
+            <div id="target-box">
+                <span id="target-name">준비 중...</span>
+            </div>
+
+            <div id="mixing-tray">
+                <div class="tray-slot" id="slot-1"></div>
+                <div class="tray-plus">+</div>
+                <div class="tray-slot" id="slot-2"></div>
+            </div>
+            <div id="feedback-text">버튼 2개를 선택하세요!</div>
+
+            <div id="palette">
+                <button class="color-btn" data-color="red" style="background-color: #ff6b6b;">빨강</button>
+                <button class="color-btn" data-color="blue" style="background-color: #339af0;">파랑</button>
+                <button class="color-btn" data-color="yellow" style="background-color: #fcc419;">노랑</button>
+            </div>
+            
+            <button id="reset-tray-btn">잘못 눌렀나요? (비우기)</button>
+            
+            <div id="ready-cover">
+                 <button id="start-btn">게임 시작!</button>
+            </div>
         </div>
 
-        <div id="target-box">
-            <span id="target-name">以鍮?以?..</span>
-        </div>
-
-        <div id="mixing-tray">
-            <div class="tray-slot" id="slot-1"></div>
-            <div class="tray-plus">+</div>
-            <div class="tray-slot" id="slot-2"></div>
-        </div>
-        <div id="feedback-text">踰꾪듉 2媛쒕? ?좏깮?섏꽭??</div>
-
-        <div id="palette">
-            <button class="color-btn" data-color="red" style="background-color: #ff6b6b;">鍮④컯</button>
-            <button class="color-btn" data-color="blue" style="background-color: #339af0;">?뚮옉</button>
-            <button class="color-btn" data-color="yellow" style="background-color: #fcc419;">?몃옉</button>
-        </div>
-        
-        <button id="reset-tray-btn">?섎せ ?뚮??섏슂? (鍮꾩슦湲?</button>
-        
-        <div id="ready-cover">
-             <button id="start-btn">寃뚯엫 ?쒖옉!</button>
+        <div id="result-modal" class="hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">결과</h3>
+                <p id="modal-message">메시지 내용</p>
+                <button id="modal-close-btn">확인</button>
+            </div>
         </div>
     </div>
 
-    <script src="../gameBridge.js"></script>`r`n    <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
