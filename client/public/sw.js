@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ddang-pwa-v1'
+const CACHE_NAME = 'ddang-pwa-v2'
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './pwa-192x192.png', './pwa-512x512.png']
 
 const STATIC_DESTINATIONS = new Set(['style', 'script', 'worker', 'image', 'font'])
@@ -51,6 +51,24 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (!STATIC_DESTINATIONS.has(request.destination)) return
+
+  const isCriticalAsset = request.destination === 'script' || request.destination === 'style' || request.destination === 'worker'
+
+  // Keep JS/CSS fresh on each deploy to reduce stale build issues.
+  if (isCriticalAsset) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone))
+          }
+          return networkResponse
+        })
+        .catch(() => caches.match(request))
+    )
+    return
+  }
 
   event.respondWith(
     caches.match(request).then((cached) => {

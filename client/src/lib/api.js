@@ -8,11 +8,18 @@ import axios from 'axios'
 
 const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 const defaultApiBaseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:8000/api'
-const normalizedApiBaseUrl = rawApiBaseUrl
-  ? (rawApiBaseUrl.endsWith('/api')
-    ? rawApiBaseUrl
-    : `${rawApiBaseUrl.replace(/\/$/, '')}/api`)
-  : defaultApiBaseUrl
+const normalizedApiBaseUrl = (() => {
+  if (!rawApiBaseUrl) return defaultApiBaseUrl
+
+  const normalized = rawApiBaseUrl.replace(/\/$/, '')
+
+  // Safety net: prevent mixed content if a PROD env accidentally sets an insecure URL.
+  if (import.meta.env.PROD && normalized.startsWith('http://')) {
+    return '/api'
+  }
+
+  return normalized.endsWith('/api') ? normalized : `${normalized}/api`
+})()
 
 const api = axios.create({
   baseURL: normalizedApiBaseUrl,
