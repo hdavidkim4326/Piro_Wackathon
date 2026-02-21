@@ -38,6 +38,11 @@ export function useTiles() {
 
     // 10초간 캐시 유지
     staleTime: 10 * 1000,
+    // 🔥 [추가 1] 5초마다 백그라운드에서 최신 타일(땅 주인) 정보를 가져옴 (실시간 동기화)
+    refetchInterval: 5000, 
+    
+    // 🔥 [추가 2] 유저가 카톡을 보다가 다시 게임 화면(브라우저)으로 돌아왔을 때 즉시 갱신
+    refetchOnWindowFocus: true,
   })
 }
 

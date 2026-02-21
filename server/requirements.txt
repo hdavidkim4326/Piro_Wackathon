@@ -1,6 +1,7 @@
 fastapi[standard]
-sqlmodel
-asyncpg
+sqlalchemy
+psycopg2-binary
 pydantic-settings
+python-dotenv
 alembic
 uvicorn[standard]

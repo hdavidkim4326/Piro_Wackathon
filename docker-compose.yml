@@ -1,4 +1,4 @@
-  # ============================================================
+# ============================================================
   # Campus Turf War - Docker Compose 설정
   # 로컬 개발 환경에서 PostgreSQL, 백엔드, 프론트엔드를 한번에 실행
   # ============================================================
@@ -11,10 +11,9 @@
       restart: unless-stopped
       ports:
         - "5433:5432"
-      environment:
-        POSTGRES_USER: ${POSTGRES_USER:-campusturf}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusturf1234}
-        POSTGRES_DB: ${POSTGRES_DB:-campusturf_db}
+      # ✅ DB도 서버용 환경변수(계정 정보)를 가져다 씁니다.
+      env_file:
+        - ./server/.env
       volumes:
         - pgdata:/var/lib/postgresql/data
       healthcheck:
@@ -32,14 +31,14 @@
       restart: unless-stopped
       ports:
         - "8000:8000"
-      environment:
-        DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-campusturf}:${POSTGRES_PASSWORD:-campusturf1234}@postgres:5432/${POSTGRES_DB:-campusturf_db}
+      # ✅ 길었던 environment 블록을 싹 지우고 파일 하나로 끝냅니다!
+      env_file:
+        - ./server/.env
       depends_on:
         postgres:
           condition: service_healthy
       volumes:
         - ./server:/app
-
     # ─── React 프론트엔드 (Vite 개발 서버) ────────────────────
     frontend:
       build:
@@ -49,6 +48,9 @@
       restart: unless-stopped
       ports:
         - "5173:5173"
+      # ✅ 프론트엔드는 정확히 client 폴더 안의 .env만 읽도록 설정!
+      env_file:
+        - ./client/.env
       volumes:
         - ./client:/app
         - /app/node_modules
@@ -57,4 +59,3 @@
 
   volumes:
     pgdata:
-    
