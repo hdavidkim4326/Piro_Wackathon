@@ -1,15 +1,13 @@
-﻿let timeLeft = 15; // 15珥?踰꾪떚湲?
-let noiseLevel = 50; // ?쒖옉 ?뚯쓬 ?섏튂 (50%)
+let timeLeft = 15; 
+let noiseLevel = 50; 
 
 let isGameRunning = false;
 let timerId;
 let gaugeTimerId;
 
-// ?뵦 諛몃윴???⑥튂 (?쒖씠??湲됱긽??)
-let noiseIncrease = 1.5; // ?댁젣 ?곸닔媛 ?꾨땲??蹂?섏엯?덈떎! (?먯젏 鍮⑤씪吏?
-const SHH_DECREASE = 30; // 8 -> 25濡?????곹뼢! (?꾨? ?뚮쭏???낇썒 ?⑥뼱吏?
+let noiseIncrease = 1.5; 
+const SHH_DECREASE = 30; 
 
-// ?붾㈃ ?붿냼 媛?몄삤湲?
 const timeDisplay = document.getElementById('time-left');
 const noiseBar = document.getElementById('noise-bar');
 const feedbackText = document.getElementById('feedback-text');
@@ -17,28 +15,27 @@ const shhBtn = document.getElementById('shh-btn');
 const startBtn = document.getElementById('start-btn');
 const readyCover = document.getElementById('ready-cover');
 
-// =========================================
-// 1. 寃뚯엫 ?쒖옉 諛???대㉧
-// =========================================
+const resultModal = document.getElementById('result-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalMessage = document.getElementById('modal-message');
+const modalCloseBtn = document.getElementById('modal-close-btn');
 
 startBtn.addEventListener('click', () => {
     timeLeft = 15;
     noiseLevel = 50;
-    noiseIncrease = 1.5; // 寃뚯엫 ?쒖옉????李⑥삤瑜대뒗 ?띾룄 珥덇린??
+    noiseIncrease = 1.5; 
     isGameRunning = true;
 
     timeDisplay.textContent = timeLeft;
     noiseBar.style.width = noiseLevel + '%';
-    noiseBar.style.background = 'linear-gradient(90deg, #ffd43b, #ff6b6b)';
-    feedbackText.textContent = "寃뚯씠吏瑜??좎??섏꽭??";
-    feedbackText.style.color = "#495057";
+    noiseBar.style.background = 'linear-gradient(90deg, #ffc078, #f03e3e)';
+    feedbackText.textContent = "게이지를 유지하세요!";
+    feedbackText.style.color = "#8d6e63";
 
     readyCover.style.display = 'none';
     shhBtn.disabled = false;
 
-    // 1珥덈쭏???⑥? ?쒓컙 源롪린
     timerId = setInterval(countDown, 1000);
-    // 0.1珥덈쭏???뚯쓬 寃뚯씠吏 ?щ━湲?
     gaugeTimerId = setInterval(increaseNoise, 100);
 });
 
@@ -47,40 +44,30 @@ function countDown() {
     timeLeft--;
     timeDisplay.textContent = timeLeft;
 
-    // ?뵦 ?듭떖 濡쒖쭅: 1珥덇? 吏???뚮쭏??寃뚯씠吏 李⑥삤瑜대뒗 ?띾룄媛 ?먯젏 ??鍮⑤씪吏묐땲??
     noiseIncrease += 1.2;
 
-    // 15珥덈? 臾댁궗??踰꾪끉?ㅻ㈃ ?깃났!
     if (timeLeft <= 0) {
-        endGame(true);
+        // 🔥 수정 1: 15초 종료 시, 게이지가 30~70 (초록색) 영역에 있는지 깐깐하게 검사합니다!
+        if (noiseLevel >= 30 && noiseLevel <= 70) {
+            endGame(true);
+        } else {
+            endGame(false, "out_of_zone"); // 영역 밖이면 실패
+        }
     }
 }
-
-// =========================================
-// 2. 寃뚯씠吏 ?곸듅 諛??먯젙
-// =========================================
 
 function increaseNoise() {
     if (!isGameRunning) return;
 
-    // ?쒓컙??吏?좎닔濡?????媛?noiseIncrease)???뷀빐吏?
     noiseLevel += noiseIncrease;
     updateGaugeUI();
 
-    // ?ㅽ뙣 議곌굔 1: 100% ?꾨떖 (寃쎄퀬 ?댁옣)
     if (noiseLevel >= 100) {
-        feedbackText.textContent = "?덈Т ?쒕걚?쎌뒿?덈떎! 已볤꺼?ъ뒿?덈떎 ?삲";
-        feedbackText.style.color = "#ff6b6b";
-        noiseBar.style.background = "#ff6b6b";
-        endGame(false);
-    }
-    // ?ㅽ뙣 議곌굔 2: 0% ?꾨떖 (?섎㈃ ?곹깭)
-    else if (noiseLevel <= 0) {
-        feedbackText.textContent = "?덈Т 議곗슜?댁꽌 ?좊뱾?덉뒿?덈떎 ?뮘";
-        feedbackText.style.color = "#4dabf7";
-        noiseBar.style.background = "#4dabf7";
-        endGame(false);
-    }
+        feedbackText.textContent = "너무 시끄럽습니다! 쫓겨났습니다 😭";
+        feedbackText.style.color = "#f03e3e";
+        noiseBar.style.background = "#f03e3e";
+        endGame(false, "noise");
+    } 
 }
 
 function updateGaugeUI() {
@@ -89,17 +76,12 @@ function updateGaugeUI() {
 
     noiseBar.style.width = noiseLevel + '%';
 
-    // ?덉쟾 吏?(30~70)瑜?踰쀬뼱?섎㈃ ?쒓컖??寃쎄퀬
     if (noiseLevel < 30 || noiseLevel > 70) {
-        noiseBar.style.boxShadow = "0 0 15px rgba(255, 107, 107, 0.8)";
+        noiseBar.style.boxShadow = "0 0 15px rgba(240, 62, 62, 0.8)";
     } else {
         noiseBar.style.boxShadow = "none";
     }
 }
-
-// =========================================
-// 3. 踰꾪듉 ?대┃ (?뚯쓬 媛먯냼)
-// =========================================
 
 shhBtn.addEventListener('mousedown', dropNoise);
 shhBtn.addEventListener('touchstart', (e) => {
@@ -109,45 +91,60 @@ shhBtn.addEventListener('touchstart', (e) => {
 
 function dropNoise() {
     if (!isGameRunning) return;
-
-    // 踰꾪듉 ?꾨? ?뚮쭏??寃뚯씠吏媛 ?낇썒 媛먯냼
+    
     noiseLevel -= SHH_DECREASE;
     updateGaugeUI();
+
+    // 🔥 수정 2: 광클해서 게이지가 0으로 떨어졌을 때 즉시 실패를 감지합니다!
+    if (noiseLevel <= 0) {
+        feedbackText.textContent = "너무 조용해서 잠들었습니다 💤";
+        feedbackText.style.color = "#4dabf7";
+        noiseBar.style.background = "#4dabf7";
+        endGame(false, "sleep");
+    }
 }
 
-// =========================================
-// 4. 寃뚯엫 醫낅즺 諛?寃곌낵 ?꾩넚
-// =========================================
-
-function endGame(isSuccess) {
+function endGame(isSuccess, failReason = "") {
     isGameRunning = false;
     clearInterval(timerId);
     clearInterval(gaugeTimerId);
     shhBtn.disabled = true;
 
+    // 모달이 뜨기 전에 배경이 빨갛게/파랗게 변하는 걸 살짝 보여주기 위해 0.2초 딜레이를 줍니다.
     setTimeout(() => {
         if (isSuccess) {
-            alert(`?럦 ?꾩꽌愿??留ㅻ꼫瑜?吏耳곗뒿?덈떎! ?먮졊 ?깃났!`);
+            modalTitle.textContent = "🎉 점령 성공!";
+            modalTitle.style.color = "#e67700";
+            modalMessage.innerHTML = `완벽한 균형 감각!<br><b>15초</b> 동안 무사히 버텼습니다!`;
         } else {
-            alert(`?뮚 洹좏삎???껋뿀?듬땲?? ?먮졊 ?ㅽ뙣!`);
+            modalTitle.textContent = "💦 점령 실패";
+            modalTitle.style.color = "#f03e3e";
+            
+            // 🔥 수정 3: 실패 이유에 따라 모달창 멘트가 아주 디테일하게 바뀝니다!
+            if(failReason === "noise") {
+                modalMessage.innerHTML = `<b>너무 시끄럽습니다! 쫓겨났습니다 😭</b><br>게이지가 폭발했습니다.`;
+            } else if (failReason === "sleep") {
+                modalMessage.innerHTML = `<b>너무 조용해서 잠들었습니다 💤</b><br>게이지가 바닥났습니다.`;
+            } else if (failReason === "out_of_zone") {
+                modalMessage.innerHTML = `<b>시간 종료!</b><br>마지막 순간에 게이지가<br>초록색 구역을 벗어났습니다.`;
+            }
         }
 
-        readyCover.style.display = 'flex';
-        startBtn.textContent = "?ㅼ떆 ?섍린";
+        resultModal.classList.add('show');
 
-        // 1. 蹂대궪 ?곗씠?곕? 蹂?섎줈 ?덉걯寃??ъ옣?⑸땲??
-            if (window.CampusTurfGameBridge && typeof window.CampusTurfGameBridge.postResult === 'function') {
-        window.CampusTurfGameBridge.postResult({
-            type: 'GAME_RESULT',
-            gameId: 8,
-            success: isSuccess
-        });
-    } else {
-        window.parent.postMessage({
-            type: 'GAME_RESULT',
-            gameId: 8,
-            success: isSuccess
-        }, '*');
-    }
-    }, 100);
+        modalCloseBtn.onclick = () => {
+            resultModal.classList.remove('show');
+            readyCover.style.display = 'flex';
+            startBtn.textContent = "다시 하기";
+
+            const resultData = {
+                type: 'GAME_RESULT',
+                gameId: 8,
+                success: isSuccess
+            };
+
+            console.log("📨 React로 날아갈 쪽지 내용:", resultData);
+            window.parent.postMessage(resultData, '*');
+        };
+    }, 200);
 }
