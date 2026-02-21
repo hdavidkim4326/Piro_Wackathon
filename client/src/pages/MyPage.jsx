@@ -6,23 +6,23 @@ import { fetchMyTileCount, logoutUser } from '../lib/api'
 import { getUnivAsset, getUnivColor, getUnivInitials } from '../lib/univAssets'
 
 const K = {
-  deleteTitle: '\uC815\uB9D0 \uD0C8\uD1F4\uD560\uAE4C\uC694?',
+  deleteTitle: '정말 탈퇴할까요?',
   deleteBody:
-    '\uC810\uB839 \uAE30\uB85D\uACFC \uC815\uBCF4\uAC00 \uC0AD\uC81C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
-  cancel: '\uCDE8\uC18C',
-  deleting: '\uCC98\uB9AC \uC911...',
-  deleteAccount: '\uD0C8\uD1F4\uD558\uAE30',
-  totalTiles: '\uB0B4 \uC810\uB839 \uC218',
-  tiles: '\uCE78',
-  rankPrefix: '\uC804\uCCB4',
-  rankSuffix: '\uC704',
-  profileEdit: '\uD504\uB85C\uD544 \uC218\uC815',
-  profileEditSub: '\uB2C9\uB124\uC784, \uD559\uAD50, \uBE44\uBC00\uBC88\uD638 \uC218\uC815',
-  demoMode: '\uB370\uBAA8 \uBAA8\uB4DC',
-  demoModeSub: '\uC9C0\uB3C4 \uD0ED\uC73C\uB85C \uC704\uCE58 \uC774\uB3D9',
-  logout: '\uB85C\uADF8\uC544\uC6C3',
-  deleteLabel: '\uD68C\uC6D0\uD0C8\uD1F4',
-  emailFallback: '\uBBF8\uB4F1\uB85D \uC774\uBA54\uC77C',
+    '점령 기록과 정보가 삭제될 수 있습니다.',
+  cancel: '취소',
+  deleting: '처리 중...',
+  deleteAccount: '탈퇴하기',
+  totalTiles: '내 점령 수',
+  tiles: '칸',
+  rankPrefix: '전체',
+  rankSuffix: '위',
+  profileEdit: '프로필 수정',
+  profileEditSub: '닉네임, 학교, 비밀번호 수정',
+  demoMode: '데모 모드',
+  demoModeSub: '지도 탭으로 위치 이동',
+  logout: '로그아웃',
+  deleteLabel: '회원탈퇴',
+  emailFallback: '미등록 이메일',
 }
 
 function DeleteModal({ onConfirm, onCancel, loading }) {
@@ -42,7 +42,7 @@ function DeleteModal({ onConfirm, onCancel, loading }) {
         transition={{ type: 'spring', damping: 22, stiffness: 280 }}
         className="fixed left-5 right-5 top-1/2 z-[91] -translate-y-1/2 rounded-3xl bg-white p-6 shadow-2xl"
       >
-        <p className="text-center text-[2rem]">\u26A0\uFE0F</p>
+        <p className="text-center text-[2rem]">⚠️</p>
         <h3 className="mt-3 text-center text-[1.1rem] font-black text-slate-800">{K.deleteTitle}</h3>
         <p className="mt-2 text-center text-[13px] leading-relaxed text-slate-400">{K.deleteBody}</p>
         <div className="mt-5 flex gap-2.5">
@@ -114,7 +114,7 @@ function TileCard({ count, rank, total }) {
       initial={{ y: 12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="mx-5 rounded-3xl p-5"
+      className="mx-auto w-[85%] max-w-[400px] rounded-3xl p-5"
       style={{
         background: 'linear-gradient(135deg,rgba(253,204,128,0.18) 0%,rgba(235,184,101,0.10) 100%)',
         border: '1.5px solid rgba(235,184,101,0.30)',
@@ -140,7 +140,7 @@ function TileCard({ count, rank, total }) {
 
       <p className="mt-2 text-[11px] font-medium text-slate-400">
         {rank > 0 ? `${K.rankPrefix} ${rank}${K.rankSuffix} ` : ''}
-        {total > 0 ? `${total}${K.tiles} \uC911 ${count}${K.tiles}` : `${count}${K.tiles}`}
+        {total > 0 ? `${total}${K.tiles} 중 ${count}${K.tiles}` : `${count}${K.tiles}`}
       </p>
     </motion.div>
   )
@@ -315,7 +315,7 @@ export default function MyPage() {
         </motion.div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex justify-center">
         <TileCard count={tileCount} rank={myRank} total={totalTiles} />
       </div>
 
@@ -323,11 +323,11 @@ export default function MyPage() {
         initial={{ y: 12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.28 }}
-        className="mx-5 mt-4 overflow-hidden rounded-3xl bg-white shadow-sm"
+        className="mx-auto w-[85%] max-w-[400px] mt-4 overflow-hidden rounded-3xl bg-white shadow-sm"
         style={{ border: '1.5px solid rgba(235,184,101,0.18)' }}
       >
         <MenuItem
-          icon="\uD83D\uDC64"
+          icon="👤"
           label={K.profileEdit}
           sublabel={K.profileEditSub}
           onClick={() => navigate('/profile-edit')}
@@ -339,7 +339,7 @@ export default function MyPage() {
         initial={{ y: 12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.34 }}
-        className="mx-5 mb-28 mt-3"
+        className="mx-auto w-[85%] max-w-[400px] mb-28 mt-3"
       >
         <motion.button
           whileTap={{ scale: 0.97 }}
