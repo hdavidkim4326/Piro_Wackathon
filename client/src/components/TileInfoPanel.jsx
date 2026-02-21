@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { useState } from 'react'
 import useGameStore from '../store/gameStore'
 import { useOccupyTile } from '../hooks/useTiles'
+import TileGameModal from './TileGameModal'
 
 const MotionPanel = motion.div
 
@@ -9,13 +11,24 @@ export default function TileInfoPanel() {
   const setSelectedTile = useGameStore((state) => state.setSelectedTile)
   const user = useGameStore((state) => state.user)
   const { mutate: occupy, isPending } = useOccupyTile()
+  const [gameOpen, setGameOpen] = useState(false)
 
-  const handleOccupy = () => {
+  const handleGameSuccess = (result) => {
     if (!selectedTile) return
+
     const university = user?.university || '우리대학교'
     occupy(
-      { gridId: selectedTile.grid_id, university, level: 1 },
-      { onSuccess: () => setSelectedTile(null) }
+      {
+        gridId: selectedTile.grid_id,
+        university,
+        level: Math.max(1, Number(result?.gameLevel || 1)),
+      },
+      {
+        onSuccess: () => {
+          setGameOpen(false)
+          setSelectedTile(null)
+        },
+      }
     )
   }
 
@@ -50,11 +63,11 @@ export default function TileInfoPanel() {
 
           <div className="flex gap-3">
             <button
-              onClick={handleOccupy}
+              onClick={() => setGameOpen(true)}
               disabled={isPending}
               className="flex-1 rounded-xl bg-primary px-4 py-3 font-bold text-white disabled:opacity-50"
             >
-              {isPending ? 'Occupying...' : 'Occupy this tile'}
+              {isPending ? 'Occupying...' : '땅따먹기 시작'}
             </button>
             <button
               onClick={() => setSelectedTile(null)}
@@ -64,6 +77,14 @@ export default function TileInfoPanel() {
             </button>
           </div>
         </MotionPanel>
+      )}
+
+      {gameOpen && selectedTile && (
+        <TileGameModal
+          tile={selectedTile}
+          onClose={() => setGameOpen(false)}
+          onSuccess={handleGameSuccess}
+        />
       )}
     </AnimatePresence>
   )
