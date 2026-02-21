@@ -168,6 +168,14 @@ function createPeanutPinElement(specialType) {
   return wrapper
 }
 
+function normalizeCenterList(value) {
+  if (Array.isArray(value)) return value
+  if (Array.isArray(value?.items)) return value.items
+  if (Array.isArray(value?.results)) return value.results
+  if (Array.isArray(value?.data)) return value.data
+  return []
+}
+
 function buildViewportTiles(bounds) {
   const sw = bounds.getSouthWest()
   const ne = bounds.getNorthEast()
@@ -237,6 +245,7 @@ export default function MapView({ center }) {
   const setLocation = useGameStore((s) => s.setLocation)
   const { data: serverTiles } = useTiles()
   const { data: specialCenters } = useSpecialCenters()
+  const centerList = normalizeCenterList(specialCenters)
 
   const clearPolygonOverlays = useCallback(() => {
     polygonOverlaysRef.current.forEach((overlay) => overlay.setMap(null))
@@ -363,10 +372,10 @@ export default function MapView({ center }) {
     const zoomLevel = mapRef.current.getLevel?.() ?? 3
     const only5x5 = zoomLevel >= ONLY_5X5_PIN_LEVEL
     setShowOnly5x5Pins(only5x5)
-    if (!specialCenters || specialCenters.length === 0) return
+    if (centerList.length === 0) return
     const visibleCenters = only5x5
-      ? specialCenters.filter((center) => center?.special_type === '5x5')
-      : specialCenters
+      ? centerList.filter((center) => center?.special_type === '5x5')
+      : centerList
 
     const tileMap = new Map()
     if (serverTiles && serverTiles.length > 0) {
@@ -375,9 +384,10 @@ export default function MapView({ center }) {
       })
     }
 
-    const overlays = visibleCenters.flatMap((center) => {
-      if (!Number.isFinite(center?.lat) || !Number.isFinite(center?.lng)) return []
-      if (!center?.grid_id) return []
+    const overlays = []
+    visibleCenters.forEach((center) => {
+      if (!Number.isFinite(center?.lat) || !Number.isFinite(center?.lng)) return
+      if (!center?.grid_id) return
 
       const content = createPeanutPinElement(center.special_type)
       const overlay = new window.kakao.maps.CustomOverlay({
@@ -411,12 +421,12 @@ export default function MapView({ center }) {
         setSelectedTile(selectedTile)
       })
 
-      return [overlay]
+      overlays.push(overlay)
     })
 
     specialPinOverlaysRef.current = overlays
     setSpecialCenterCount(overlays.length)
-  }, [clearSpecialPinOverlays, serverTiles, setSelectedTile, specialCenters])
+  }, [centerList, clearSpecialPinOverlays, serverTiles, setSelectedTile])
 
   useEffect(() => {
     drawPolygonsRef.current = drawPolygons
@@ -454,7 +464,7 @@ export default function MapView({ center }) {
   useEffect(() => {
     if (!mapReady) return
     drawSpecialCenterPins()
-  }, [drawSpecialCenterPins, mapReady, specialCenters, serverTiles])
+  }, [drawSpecialCenterPins, mapReady, centerList, serverTiles])
 
   useEffect(() => {
     const checkKakaoReady = window.setInterval(() => {
