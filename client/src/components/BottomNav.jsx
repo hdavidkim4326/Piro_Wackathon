@@ -25,7 +25,7 @@ export default function BottomNav() {
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 280, delay: 0.2 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-fit min-w-[280px] bg-slate-900/88 backdrop-blur-xl border border-white/[0.08] rounded-full px-5 py-3 shadow-2xl shadow-slate-900/30 flex justify-around items-center gap-5"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-fit min-w-[280px] bg-slate-900/50 backdrop-blur-xl border border-white/[0.08] rounded-full px-5 py-3 shadow-2xl shadow-slate-900/30 flex justify-around items-center gap-5"
     >
       {NAV_ITEMS.map((item) => {
         const isActive = location.pathname === item.to
