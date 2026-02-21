@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import useKakaoLoader from "../hooks/useKakaoLoader";
 import useKakaoPlaces from "../hooks/useKakaoPlaces";
+
+const MotionDiv = motion.div;
 
 export default function MapSearchBar({ onPickPlace }) {
   const kakaoReady = useKakaoLoader();
@@ -10,7 +12,10 @@ export default function MapSearchBar({ onPickPlace }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
 
-  const canSearch = useMemo(() => kakaoReady && q.trim().length >= 2, [kakaoReady, q]);
+  const canSearch = useMemo(
+    () => kakaoReady && q.trim().length >= 2,
+    [kakaoReady, q]
+  );
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -19,18 +24,20 @@ export default function MapSearchBar({ onPickPlace }) {
     setOpen(true);
   };
 
-  useEffect(() => {
-    if (!q.trim()) {
+  const onChangeQuery = (e) => {
+    const next = e.target.value;
+    setQ(next);
+    if (!next.trim()) {
       clear();
       setOpen(false);
     }
-  }, [q]);
+  };
 
   return (
     <>
       <form
         onSubmit={onSubmit}
-        className="bg-white/90 backdrop-blur-xl rounded-2xl px-4 py-3 shadow-lg shadow-slate-900/5 border border-white/60 flex items-center gap-3"
+        className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -40,7 +47,7 @@ export default function MapSearchBar({ onPickPlace }) {
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="w-5 h-5 text-slate-400"
+          className="h-5 w-5 text-slate-400"
         >
           <circle cx="11" cy="11" r="7" />
           <path d="M21 21l-4.3-4.3" />
@@ -48,15 +55,15 @@ export default function MapSearchBar({ onPickPlace }) {
 
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="장소/학교/역 이름 검색"
-          className="w-full bg-transparent outline-none text-sm font-semibold text-slate-800 placeholder:text-slate-400"
+          onChange={onChangeQuery}
+          placeholder="장소/학교/건물명 검색"
+          className="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
         />
 
         <button
           type="submit"
           disabled={!canSearch}
-          className="text-xs font-extrabold text-indigo-600 px-2 py-1 rounded-lg active:bg-indigo-50 disabled:opacity-40"
+          className="rounded-lg px-2 py-1 text-xs font-extrabold text-indigo-600 active:bg-indigo-50 disabled:opacity-40"
         >
           {loading ? "검색중" : "검색"}
         </button>
@@ -65,7 +72,7 @@ export default function MapSearchBar({ onPickPlace }) {
       <AnimatePresence>
         {open && (
           <>
-            <motion.div
+            <MotionDiv
               className="fixed inset-0 z-[60] bg-black/30"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -73,15 +80,15 @@ export default function MapSearchBar({ onPickPlace }) {
               onClick={() => setOpen(false)}
             />
 
-            <motion.div
-              className="fixed left-0 right-0 bottom-0 z-[70] bg-white rounded-t-3xl shadow-2xl"
+            <MotionDiv
+              className="fixed bottom-0 left-0 right-0 z-[70] rounded-t-3xl bg-white shadow-2xl"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 24, stiffness: 280 }}
               style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}
             >
-              <div className="px-5 pt-4 pb-3">
+              <div className="px-5 pb-3 pt-4">
                 <div className="mx-auto h-1 w-12 rounded-full bg-slate-200" />
                 <div className="mt-3 flex items-center justify-between">
                   <div>
@@ -92,7 +99,7 @@ export default function MapSearchBar({ onPickPlace }) {
                   </div>
                   <button
                     onClick={() => setOpen(false)}
-                    className="text-[12px] font-extrabold text-slate-500 px-3 py-2 rounded-xl active:bg-slate-100"
+                    className="rounded-xl px-3 py-2 text-[12px] font-extrabold text-slate-500 active:bg-slate-100"
                   >
                     닫기
                   </button>
@@ -102,7 +109,7 @@ export default function MapSearchBar({ onPickPlace }) {
               <div className="max-h-[46vh] overflow-y-auto px-4 pb-4">
                 {results.length === 0 ? (
                   <div className="px-2 py-10 text-center text-[13px] font-semibold text-slate-400">
-                    결과가 없어. 검색어를 바꿔봐.
+                    검색 결과가 없습니다.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -113,7 +120,7 @@ export default function MapSearchBar({ onPickPlace }) {
                           onPickPlace?.(p);
                           setOpen(false);
                         }}
-                        className="w-full text-left rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 active:bg-slate-100"
+                        className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-left active:bg-slate-100"
                       >
                         <p className="text-[13px] font-extrabold text-slate-900">
                           {p.name}
@@ -129,7 +136,7 @@ export default function MapSearchBar({ onPickPlace }) {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </MotionDiv>
           </>
         )}
       </AnimatePresence>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>6단계: 방향 스와이프</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <h2>👆 6단계: 방향 스와이프</h2>
+        <p>10초 안에 화살표 방향으로 15번 슬라이드!</p>
+
+        <div class="status-board">
+            <div class="time">⏱ 남은 시간: <span id="time-left">10</span>초</div>
+            <div class="score">✔ 성공: <span id="success-count">0</span>/15</div>
+        </div>
+
+        <div id="swipe-area">
+            <div id="arrow-display">❓</div>
+            <div id="feedback-text">방향을 맞춰보세요!</div>
+        </div>
+        
+        <div id="ready-cover">
+             <button id="start-btn">게임 시작!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

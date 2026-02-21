@@ -1,19 +1,21 @@
 // src/components/CaptureMenu.jsx
 import { AnimatePresence, motion } from "framer-motion";
 
-export default function CaptureMenu({ open, onClose, onQuick, onChallenge }) {
+const MotionDiv = motion.div;
+
+export default function CaptureMenu({ open, onClose, onChallenge }) {
   return (
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
+          <MotionDiv
             className="fixed inset-0 z-50 bg-black/35"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
-          <motion.div
+          <MotionDiv
             className="fixed left-0 right-0 bottom-16 z-60 rounded-t-3xl bg-white p-5 shadow-2xl"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -37,7 +39,7 @@ export default function CaptureMenu({ open, onClose, onQuick, onChallenge }) {
             >
               닫기
             </button>
-          </motion.div>
+          </MotionDiv>
         </>
       )}
     </AnimatePresence>

@@ -1,6 +1,11 @@
 # models.py
 from __future__ import annotations
 
+import uuid
+from datetime import datetime
+from enum import IntEnum
+from typing import Optional
+
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -11,12 +16,17 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class TerritoryStatusEnum(IntEnum):
+    OCCUPIED = 0
+    NEUTRAL = 1
 
 
 # -------------------------
@@ -53,7 +63,9 @@ class User(Base):
 class OccupationCategory(Base):
     __tablename__ = "occupation_categories"
 
-    category_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # is_active: any | null  -> 일단 Boolean이 아니라 "의미불명"이라 JSON으로
@@ -76,21 +88,21 @@ class Organization(Base):
         UniqueConstraint("org_name", name="uq_organizations_org_name"),
     )
 
-    org_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    category_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("occupation_categories.category_id"), nullable=False
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("occupation_categories.category_id"), nullable=False
     )
     org_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    # color_hex: number | null (int로)
-    color_hex: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    color_hex: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     created_at: Mapped[DateTime | None] = mapped_column(
         DateTime, nullable=True, server_default=func.now()
     )
 
-    # org_img: any | null  -> 파일/바이너리/URL 등 가능성. 일단 JSONB로 둠.
-    org_img: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    org_img: Mapped[str | None] = mapped_column("org_image_url", String(255), nullable=True)
 
     # relationships
     category: Mapped["OccupationCategory"] = relationship(back_populates="organizations")
@@ -108,9 +120,15 @@ class Organization(Base):
 class UserOrganization(Base):
     __tablename__ = "user_organizations"
 
-    userorg_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    org_id: Mapped[int] = mapped_column(Integer, ForeignKey("organizations.org_id"), nullable=False)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), nullable=False)
+    userorg_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("organizations.org_id"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
+    )
 
     email_verified: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
@@ -125,7 +143,9 @@ class UserOrganization(Base):
 class MissionTemplate(Base):
     __tablename__ = "mission_templates"
 
-    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    mission_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     territories: Mapped[list["Territory"]] = relationship(back_populates="mission")
     mission_sessions: Mapped[list["MissionSession"]] = relationship(back_populates="mission")
@@ -137,13 +157,15 @@ class MissionTemplate(Base):
 class Territory(Base):
     __tablename__ = "territories"
 
-    territory_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    mission_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("mission_templates.mission_id"), nullable=False
+    territory_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    category_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("occupation_categories.category_id"), nullable=False
+
+    mission_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("mission_templates.mission_id"), nullable=False
+    )
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("occupation_categories.category_id"), nullable=False
     )
 
     # w3w: string | null
@@ -168,16 +190,21 @@ class TerritoryStatus(Base):
 
     __tablename__ = "territory_statuses"
 
-    territory_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("territories.territory_id"), primary_key=True
+    territory_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("territories.territory_id"), primary_key=True
     )
-    mission_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("mission_templates.mission_id"), primary_key=True
+    mission_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("mission_templates.mission_id"), primary_key=True
     )
-    org_id: Mapped[int] = mapped_column(Integer, ForeignKey("organizations.org_id"), nullable=False)
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("organizations.org_id"), nullable=False
+    )
 
     # 0: 점령 / 1: 무점령
     status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    protected_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # relationships
     territory: Mapped["Territory"] = relationship(back_populates="statuses")
@@ -185,14 +212,45 @@ class TerritoryStatus(Base):
     organization: Mapped["Organization"] = relationship(back_populates="territory_statuses")
 
 
+class TerritoryOccupationHistory(Base):
+    __tablename__ = "territory_occupation_histories"
+
+    occupation_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    territory_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("territories.territory_id"), nullable=False
+    )
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("occupation_categories.category_id"), nullable=True
+    )
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("organizations.org_id"), nullable=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True
+    )
+    protected_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class MissionSession(Base):
     __tablename__ = "mission_sessions"
 
     session_id: Mapped[int] = mapped_column("sessionId", Integer, primary_key=True, autoincrement=True)
 
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), nullable=False)
-    territory_id: Mapped[int] = mapped_column(Integer, ForeignKey("territories.territory_id"), nullable=False)
-    mission_id: Mapped[int] = mapped_column(Integer, ForeignKey("mission_templates.mission_id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
+    )
+    territory_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("territories.territory_id"), nullable=False
+    )
+    mission_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("mission_templates.mission_id"), nullable=False
+    )
 
     # mission_status: any | null (성공/실패/진행중 문자열일 수도)
     mission_status: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
@@ -226,8 +284,8 @@ class SpecialTerritory(Base):
     sp_territory_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     sp_game_id: Mapped[int] = mapped_column(Integer, ForeignKey("special_games.sp_game_id"), nullable=False)
-    category_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("occupation_categories.category_id"), nullable=False
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("occupation_categories.category_id"), nullable=False
     )
 
     sp_w3w: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -257,7 +315,9 @@ class SpecialTerritoryStatus(Base):
     sp_game_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("special_games.sp_game_id"), primary_key=True
     )
-    org_id: Mapped[int] = mapped_column(Integer, ForeignKey("organizations.org_id"), nullable=False)
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("organizations.org_id"), nullable=False
+    )
 
     # 0: 점령 / 1: 무결정
     status: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -274,7 +334,9 @@ class SpecialGameSession(Base):
     # any -> 우선 Integer PK
     sp_session_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
+    )
     sp_territory_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("special_territories.sp_territory_id"), nullable=False
     )
