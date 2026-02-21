@@ -114,32 +114,27 @@ function TileCard({ count, rank, total }) {
       initial={{ y: 12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="mx-auto w-[85%] max-w-[400px] rounded-3xl p-5"
-      style={{
-        background: 'linear-gradient(135deg,rgba(253,204,128,0.18) 0%,rgba(235,184,101,0.10) 100%)',
-        border: '1.5px solid rgba(235,184,101,0.30)',
-      }}
+      className="mx-5 rounded-[24px] p-5 border-2 border-[#ffe8cc] bg-[#fff9f0] shadow-md"
     >
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-[13px] font-bold text-slate-500">{K.totalTiles}</span>
-        <span className="tabular-nums text-[1.6rem] font-black" style={{ color: '#B8710A' }}>
+        <span className="text-[14px] font-bold text-[#8d6e63]">{K.totalTiles}</span>
+        <span className="tabular-nums text-3xl font-black text-[#d9480f]" style={{ fontFamily: "'MemomentKkukkukk', sans-serif" }}>
           {count}
-          <span className="ml-1 text-[14px] font-bold">{K.tiles}</span>
+          <span className="ml-1 text-[16px] font-bold"> {K.tiles}</span>
         </span>
       </div>
 
-      <div className="h-2.5 overflow-hidden rounded-full" style={{ background: 'rgba(218,172,93,0.20)' }}>
+      <div className="h-3 overflow-hidden rounded-full bg-[#fff4e6] border border-[#ffe8cc]">
         <motion.div
-          className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg,#FDCC80,#EBB865,#DF7E66)' }}
+          className="h-full rounded-full bg-gradient-to-r from-[#ffd8a8] to-[#ff922b]"
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 1.0, delay: 0.4, ease: 'easeOut' }}
         />
       </div>
 
-      <p className="mt-2 text-[11px] font-medium text-slate-400">
-        {rank > 0 ? `${K.rankPrefix} ${rank}${K.rankSuffix} ` : ''}
+      <p className="mt-2 text-[12px] font-semibold text-[#8d6e63]">
+        {rank > 0 ? <span className="text-[#d9480f]">{K.rankPrefix} {rank}{K.rankSuffix} </span> : ''}
         {total > 0 ? `${total}${K.tiles} 중 ${count}${K.tiles}` : `${count}${K.tiles}`}
       </p>
     </motion.div>
@@ -149,23 +144,25 @@ function TileCard({ count, rank, total }) {
 function MenuItem({ icon, label, sublabel, onClick, chevron = true }) {
   return (
     <motion.button
-      whileTap={{ scale: 0.98, background: 'rgba(235,184,101,0.06)' }}
+      whileTap={{ scale: 0.98, background: '#fff4e6' }}
       onClick={onClick}
       className="flex w-full items-center gap-3.5 px-5 py-4 text-left transition-colors"
     >
-      <span className="w-8 flex-shrink-0 text-center text-[22px]">{icon}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#ffd8a8] text-xl text-white shadow-sm">
+        {icon}
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-bold text-slate-700">{label}</p>
-        {sublabel && <p className="text-[11px] font-medium text-slate-400">{sublabel}</p>}
+        <p className="text-[15px] font-bold text-[#5d4037]">{label}</p>
+        {sublabel && <p className="text-[12px] font-medium text-[#8d6e63]">{sublabel}</p>}
       </div>
       {chevron && (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#CBD5E1"
+          stroke="#d9480f"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -181,21 +178,23 @@ function DemoModeRow({ enabled, onToggle }) {
   return (
     <button
       onClick={onToggle}
-      className="flex w-full items-center justify-between gap-3.5 border-t border-slate-100 px-5 py-4 text-left transition-colors"
+      className="flex w-full items-center justify-between gap-3.5 border-t-2 border-[#ffe8cc] px-5 py-4 text-left transition-colors hover:bg-[#fff9f0]"
     >
       <div className="flex min-w-0 items-center gap-3.5">
-        <span className="w-8 flex-shrink-0 text-center text-[22px]">📍</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#ffd8a8] text-xl shadow-sm">
+          📍
+        </span>
         <div className="min-w-0">
-          <p className="text-[14px] font-bold text-slate-700">데모 모드</p>
-          <p className="text-[11px] font-medium text-slate-400">지도 탭으로 위치 이동 (시연용)</p>
+          <p className="text-[15px] font-bold text-[#5d4037]">데모 모드</p>
+          <p className="text-[12px] font-medium text-[#8d6e63]">지도 탭으로 위치 이동 (시연용)</p>
         </div>
       </div>
       <div
-        className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${enabled ? 'bg-rose-500' : 'bg-slate-200'
+        className={`relative h-7 w-12 rounded-full transition-colors duration-200 border-2 ${enabled ? 'border-[#ff922b] bg-[#ff922b]' : 'border-[#ffe8cc] bg-white'
           }`}
       >
         <div
-          className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${enabled ? 'translate-x-5' : 'translate-x-0.5'
+          className={`absolute top-0.5 h-5 w-5 rounded-full shadow-sm transition-transform duration-200 ${enabled ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-[#d9480f]'
             }`}
         />
       </div>
@@ -252,7 +251,7 @@ export default function MyPage() {
       console.error('[MyPage] logout failed:', error)
     }
     dispatch({ type: 'LOGOUT' })
-    navigate('/auth', { replace: true })
+    window.location.href = '/auth'
   }
 
   const handleDeleteConfirm = async () => {
@@ -269,12 +268,15 @@ export default function MyPage() {
       }
       dispatch({ type: 'DELETE_ACCOUNT' })
       setDeleteLoading(false)
-      navigate('/auth', { replace: true })
+      window.location.href = '/auth'
     }
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-white" style={{ background: '#FDF9F4' }}>
+    <div
+      className="h-full overflow-y-auto bg-[#fff9f0]"
+      style={{ fontFamily: "'Gowun Dodum', sans-serif" }}
+    >
       <AnimatePresence>
         {showDelete && (
           <DeleteModal
@@ -285,37 +287,42 @@ export default function MyPage() {
         )}
       </AnimatePresence>
 
-      <div className="relative overflow-hidden px-5 pb-8 pt-14" style={{ background: brandColor }}>
+      <div className="relative overflow-hidden px-5 pb-10 pt-16 shadow-sm border-b-[3px] border-[#ffd8a8]" style={{ background: brandColor }}>
+        {/* 장식 */}
         <div
-          className="absolute -top-16 -right-16 h-48 w-48 rounded-full opacity-20"
-          style={{ background: 'rgba(255,255,255,0.3)' }}
+          className="absolute -top-16 -right-16 h-48 w-48 rounded-full opacity-30 blur-2xl"
+          style={{ background: 'rgba(255,255,255,0.4)' }}
         />
         <div
-          className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full opacity-10"
+          className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full opacity-20 blur-xl"
           style={{ background: 'rgba(255,255,255,0.4)' }}
         />
 
         <motion.div
-          initial={{ y: 16, opacity: 0 }}
+          initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', damping: 20 }}
-          className="relative z-10 flex items-center gap-4"
+          className="relative z-10 flex items-center gap-5"
         >
-          <UnivLogo asset={asset} size={68} />
+          <div className="shadow-lg rounded-2xl p-1 bg-white/20 backdrop-blur-sm">
+            <UnivLogo asset={asset} size={72} />
+          </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[1.3rem] font-black leading-tight text-white">{user.nickname}</p>
-            <p className="mt-0.5 truncate text-[13px] font-semibold text-white/75">
+            <p className="truncate text-[26px] font-black leading-tight text-white drop-shadow-md" style={{ fontFamily: "'MemomentKkukkukk', sans-serif", letterSpacing: "1px" }}>
+              {user.nickname}
+            </p>
+            <p className="mt-1 truncate text-[14px] font-bold text-white/90 drop-shadow-sm">
               {user.university || asset.name}
             </p>
-            <p className="mt-1 truncate text-[11px] font-medium text-white/55">
+            <p className="mt-0.5 truncate text-[12px] font-medium text-white/70">
               {safeEmail || K.emailFallback}
             </p>
           </div>
         </motion.div>
       </div>
 
-      <div className="mt-4 flex justify-center">
+      <div className="mt-6">
         <TileCard count={tileCount} rank={myRank} total={totalTiles} />
       </div>
 
@@ -323,8 +330,7 @@ export default function MyPage() {
         initial={{ y: 12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.28 }}
-        className="mx-auto w-[85%] max-w-[400px] mt-4 overflow-hidden rounded-3xl bg-white shadow-sm"
-        style={{ border: '1.5px solid rgba(235,184,101,0.18)' }}
+        className="mx-5 mt-4 overflow-hidden rounded-[24px] bg-white shadow-md border-2 border-[#ffe8cc]"
       >
         <MenuItem
           icon="👤"
@@ -339,16 +345,16 @@ export default function MyPage() {
         initial={{ y: 12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.34 }}
-        className="mx-auto w-[85%] max-w-[400px] mb-28 mt-3"
+        className="mx-5 mb-28 mt-4"
       >
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleLogout}
-          className="h-14 w-full rounded-2xl text-[14px] font-bold text-white shadow-md"
+          className="h-14 w-full rounded-2xl text-[16px] font-black text-white shadow-md"
           style={{
-            background: 'linear-gradient(135deg,#FDCC80 0%,#EBB865 50%,#DF7E66 100%)',
-            boxShadow: '0 6px 20px rgba(235,184,101,0.30)',
-            color: '#5C3100',
+            background: 'linear-gradient(135deg, #ff922b, #d9480f)',
+            fontFamily: "'MemomentKkukkukk', sans-serif",
+            letterSpacing: "1px"
           }}
         >
           {K.logout}
@@ -356,7 +362,7 @@ export default function MyPage() {
 
         <button
           onClick={() => setShowDelete(true)}
-          className="mt-2 w-full py-3 text-[12px] font-semibold text-slate-300 transition-colors hover:text-rose-400"
+          className="mt-3 w-full py-3 text-[13px] font-bold text-[#adb5bd] transition-colors hover:text-[#d9480f]"
         >
           {K.deleteLabel}
         </button>
