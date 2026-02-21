@@ -204,6 +204,10 @@ class Territory(Base):
         back_populates="territory"
     )
 
+    occupation_histories: Mapped[List["TerritoryOccupationHistory"]] = relationship(
+        back_populates="territory"
+    )
+
     __table_args__ = (
         UniqueConstraint("category_id", "w3w", name="uq_territory_category_w3w"),
         Index("idx_territory_category", "category_id"),
@@ -384,4 +388,38 @@ class TerritoryOccupationHistory(Base):
         Index("idx_occ_hist_org", "org_id"),
         Index("idx_occ_hist_protected_until", "protected_until"),
         Index("idx_occ_hist_claimed_at", "claimed_at"),
+    )
+
+
+# ─── DB 팀원 모델에서 누락된 부분 보완 ──────────────────────
+class TerritoryOccupation(Base):
+    """
+    미션 성공 시 생성되는 '점령 결과' 레코드.
+    MissionSession 1:1, Territory N:1 관계.
+    """
+    __tablename__ = "territory_occupations"
+
+    occupation_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("mission_sessions.session_id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    territory_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("territories.territory_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    occupied_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    mission_session: Mapped["MissionSession"] = relationship(
+        back_populates="occupation"
+    )
+    territory: Mapped["Territory"] = relationship(
+        back_populates="occupations"
     )

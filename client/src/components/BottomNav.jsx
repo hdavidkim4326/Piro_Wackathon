@@ -9,6 +9,9 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
+const MotionNav = motion.nav
+const MotionDiv = motion.div
+
 // ─── 네비게이션 탭 정의 ─────────────────────────────────────
 const NAV_ITEMS = [
   { to: '/', label: '이벤트', icon: EventIcon },
@@ -24,7 +27,7 @@ export default function BottomNav() {
   const location = useLocation()
 
   return (
-    <motion.nav
+    <MotionNav
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 280, delay: 0.2 }}
@@ -42,20 +45,20 @@ export default function BottomNav() {
           >
             {/* 활성 탭 배경 글로우 */}
             {isActive && (
-              <motion.div
+              <MotionDiv
                 layoutId="nav-active-bg"
                 className="absolute -inset-2 bg-white/[0.08] rounded-2xl"
                 transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               />
             )}
 
-            <motion.div
+            <MotionDiv
               animate={{ scale: isActive ? 1.15 : 1 }}
               transition={{ type: 'spring', damping: 15, stiffness: 300 }}
               className="relative z-10"
             >
               <Icon active={isActive} />
-            </motion.div>
+            </MotionDiv>
 
             <span
               className={`relative z-10 text-[10px] font-semibold transition-colors duration-200 ${
@@ -67,7 +70,7 @@ export default function BottomNav() {
           </NavLink>
         )
       })}
-    </motion.nav>
+    </MotionNav>
   )
 }
 
