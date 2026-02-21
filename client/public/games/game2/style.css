@@ -14,13 +14,22 @@ body {
     background: white;
     padding: 30px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     text-align: center;
     width: 300px;
 }
 
-h2 { margin-top: 0; color: #333; }
-p { color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
 
 .status-board {
     display: flex;
@@ -33,8 +42,13 @@ p { color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
     font-size: 16px;
 }
 
-.chance { color: #ff6b6b; }
-.score { color: #20c997; }
+.chance {
+    color: #ff6b6b;
+}
+
+.score {
+    color: #20c997;
+}
 
 /* 📏 게이지 바 디자인 */
 .gauge-box {
@@ -51,7 +65,8 @@ p { color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
 .target-zone {
     position: absolute;
     top: 0;
-    left: 35%; /* 35% ~ 65% 구간이 타겟 */
+    left: 35%;
+    /* 35% ~ 65% 구간이 타겟 */
     width: 30%;
     height: 100%;
     background: rgba(32, 201, 151, 0.4);

@@ -1,6 +1,6 @@
-let chances = 5;
+let chances = 7;
 let successCount = 0;
-const GOAL_SUCCESS = 3; // 3번 성공 시 점령
+const GOAL_SUCCESS = 4; // 4번 성공 시 점령
 
 let isMoving = false;
 let barPosition = 0; // 0 ~ 100 (%)
@@ -40,7 +40,7 @@ function startRound() {
     barDirection = 1;
     movingBar.style.left = '0%';
     movingBar.style.backgroundColor = '#ff6b6b'; // 빨간색으로 초기화
-    
+
     isMoving = true;
     actionBtn.disabled = false;
     moveBar();
@@ -48,7 +48,7 @@ function startRound() {
 
 // [게임 시작] 버튼 클릭
 startBtn.addEventListener('click', () => {
-    chances = 5;
+    chances = 7;
     successCount = 0;
     speed = 1.5; // 초기 속도
     chancesDisplay.textContent = chances;
@@ -56,7 +56,7 @@ startBtn.addEventListener('click', () => {
 
     startBtn.style.display = 'none';
     actionBtn.textContent = "멈춤!";
-    
+
     startRound();
 });
 
@@ -77,7 +77,7 @@ actionBtn.addEventListener('click', () => {
         successCount++;
         successDisplay.textContent = successCount;
         movingBar.style.backgroundColor = '#20c997'; // 성공 시 초록색으로 변경!
-        speed += 0.3; // 성공할 때마다 게이지 속도가 살짝 빨라짐 (긴장감 UP!)
+        speed += 0.7; // 성공할 때마다 게이지 속도가 살짝 빨라짐 (긴장감 UP!)
     } else {
         movingBar.style.backgroundColor = '#495057'; // 실패 시 어두운 회색으로 변경
     }
@@ -92,7 +92,7 @@ actionBtn.addEventListener('click', () => {
         } else {
             endGame();
         }
-    }, 800); 
+    }, 800);
 });
 
 // 🏁 게임 종료 처리
@@ -104,7 +104,7 @@ function endGame() {
     const isSuccess = successCount >= GOAL_SUCCESS;
 
     if (isSuccess) {
-        alert(`🎉 성공! 5번 중 ${successCount}번 정확히 맞췄습니다!`);
+        alert(`🎉 성공! 7번 중 ${successCount}번 정확히 맞췄습니다!`);
     } else {
         alert(`💦 아쉽네요! ${successCount}번 성공에 그쳤습니다.`);
     }
