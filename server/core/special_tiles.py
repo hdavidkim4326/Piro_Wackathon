@@ -82,6 +82,26 @@ def _to_grid_id(point: GridPoint) -> str:
     return f"grid_{point.row}_{point.col}"
 
 
+def get_special_capture_grid_ids(center_grid_id: str, special_type: str) -> list[str]:
+    """
+    Build square capture targets from a special center.
+
+    3x3 -> 9 tiles, 5x5 -> 25 tiles.
+    """
+    center = parse_grid_id(center_grid_id)
+    if not center:
+        return []
+
+    radius = 2 if special_type == "5x5" else 1
+    grid_ids: list[str] = []
+
+    for row in range(center.row - radius, center.row + radius + 1):
+        for col in range(center.col - radius, center.col + radius + 1):
+            grid_ids.append(_to_grid_id(GridPoint(row=row, col=col)))
+
+    return grid_ids
+
+
 def _stable_hash_int(*parts: object) -> int:
     raw = "|".join(str(part) for part in parts).encode("utf-8")
     digest = hashlib.sha256(raw).hexdigest()
