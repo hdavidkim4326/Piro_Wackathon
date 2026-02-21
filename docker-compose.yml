@@ -11,6 +11,8 @@
       restart: unless-stopped
       ports:
         - "5433:5432"
+      env_file:
+        - ./client/.env
       environment:
         POSTGRES_USER: ${POSTGRES_USER:-campusturf}
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusturf1234}
