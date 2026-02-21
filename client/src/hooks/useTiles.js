@@ -9,7 +9,11 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+<<<<<<< HEAD
+import { fetchMyStats, fetchTiles, occupyTile, fetchRanking } from '../lib/api'
+=======
 import { fetchTiles, occupyTile, fetchRanking, fetchSpecialCenters } from '../lib/api'
+>>>>>>> cf39f88a3dff96aa5e5e8d9d5279cd53831cb650
 import useGameStore from '../store/gameStore'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -74,6 +78,10 @@ export function useOccupyTile() {
         queryKey: ['ranking'],
         refetchType: 'active',
       })
+      queryClient.invalidateQueries({
+        queryKey: ['user', 'stats'],
+        refetchType: 'active',
+      })
 
       console.log('[useOccupyTile] 점령 성공, 타일 갱신 트리거:', data)
     },
@@ -89,5 +97,15 @@ export function useRanking(limit = 10) {
     queryKey: ['ranking', limit],
     queryFn: () => fetchRanking(limit),
     staleTime: 30_000,
+  })
+}
+
+export function useMyStats(userId) {
+  return useQuery({
+    queryKey: ['user', 'stats', userId],
+    queryFn: () => fetchMyStats(userId),
+    enabled: Boolean(userId),
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
   })
 }

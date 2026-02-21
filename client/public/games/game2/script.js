@@ -1,14 +1,14 @@
-let chances = 7;
+﻿let chances = 7;
 let successCount = 0;
-const GOAL_SUCCESS = 4; // 4번 성공 시 점령
+const GOAL_SUCCESS = 4; // 4踰??깃났 ???먮졊
 
 let isMoving = false;
 let barPosition = 0; // 0 ~ 100 (%)
-let barDirection = 1; // 1: 오른쪽, -1: 왼쪽
-let speed = 1.5; // 바 이동 속도
+let barDirection = 1; // 1: ?ㅻⅨ履? -1: ?쇱そ
+let speed = 1.5; // 諛??대룞 ?띾룄
 let animationId;
 
-// 화면 요소 가져오기
+// ?붾㈃ ?붿냼 媛?몄삤湲?
 const chancesDisplay = document.getElementById('chances-left');
 const successDisplay = document.getElementById('success-count');
 const movingBar = document.getElementById('moving-bar');
@@ -22,7 +22,7 @@ const modalTitle = document.getElementById('modal-title');
 const modalMessage = document.getElementById('modal-message');
 const modalCloseBtn = document.getElementById('modal-close-btn');
 
-// 🎬 바를 좌우로 부드럽게 움직이는 애니메이션 함수
+// ?렗 諛붾? 醫뚯슦濡?遺?쒕읇寃??吏곸씠???좊땲硫붿씠???⑥닔
 function moveBar() {
     if (!isMoving) return;
 
@@ -40,7 +40,7 @@ function moveBar() {
     animationId = requestAnimationFrame(moveBar);
 }
 
-// 🕹️ 라운드 시작 함수
+// ?빘截??쇱슫???쒖옉 ?⑥닔
 function startRound() {
     barPosition = 0;
     barDirection = 1;
@@ -52,7 +52,7 @@ function startRound() {
     moveBar();
 }
 
-// [게임 시작] 버튼 클릭
+// [寃뚯엫 ?쒖옉] 踰꾪듉 ?대┃
 startBtn.addEventListener('click', () => {
     chances = 7;
     successCount = 0;
@@ -67,11 +67,11 @@ startBtn.addEventListener('click', () => {
     startRound();
 });
 
-// [멈춤!] 버튼 클릭
+// [硫덉땄!] 踰꾪듉 ?대┃
 actionBtn.addEventListener('click', () => {
     if (!isMoving) return;
 
-    // 1. 움직임 멈추기
+    // 1. ?吏곸엫 硫덉텛湲?
     isMoving = false;
     cancelAnimationFrame(animationId);
     actionBtn.disabled = true;

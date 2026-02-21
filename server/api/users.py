@@ -8,10 +8,12 @@
   POST /login        로그인
 """
 
+import uuid
+
 import bcrypt
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from config import settings
@@ -27,9 +29,18 @@ from core.email_verification import (
     store_auth_code,
     verify_auth_code,
 )
+from core.mission import get_default_mission
 from database import get_db
-from models import OccupationCategory, Organization, User, UserOrganization
-from schemas import LoginRequest, LoginResponse, UserRead
+from models import (
+    OccupationCategory,
+    Organization,
+    TerritoryOccupationHistory,
+    TerritoryStatus,
+    TerritoryStatusEnum,
+    User,
+    UserOrganization,
+)
+from schemas import LoginRequest, LoginResponse, UserRead, UserStatsResponse
 
 router = APIRouter()
 
@@ -234,4 +245,72 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
             university=university,
             created_at=user.created_at.isoformat(),
         ),
+    )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  GET /users/me/stats
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@router.get("/users/me/stats", response_model=UserStatsResponse)
+def get_my_stats(
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+    db: Session = Depends(get_db),
+):
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="X-User-Id 헤더가 필요합니다.")
+
+    try:
+        user_id = uuid.UUID(x_user_id.strip())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="유효하지 않은 X-User-Id 입니다.") from exc
+
+    user = db.execute(select(User).where(User.user_id == user_id)).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    org_row = db.execute(
+        select(Organization.org_id, Organization.org_name)
+        .join(UserOrganization, Organization.org_id == UserOrganization.org_id)
+        .where(UserOrganization.user_id == user_id)
+    ).first()
+
+    org_id = org_row.org_id if org_row else None
+    university = org_row.org_name if org_row else "미소속"
+
+    capture_stats = db.execute(
+        select(
+            func.count(TerritoryOccupationHistory.occupation_id).label("capture_count"),
+            func.count(func.distinct(TerritoryOccupationHistory.territory_id)).label(
+                "unique_capture_count"
+            ),
+            func.coalesce(func.sum(TerritoryOccupationHistory.level), 0).label(
+                "contribution_score"
+            ),
+        )
+        .where(TerritoryOccupationHistory.user_id == user_id)
+    ).one()
+
+    organization_tile_count = 0
+    if org_id:
+        mission = get_default_mission(db)
+        tile_stmt = (
+            select(func.count(func.distinct(TerritoryStatus.territory_id)))
+            .where(
+                TerritoryStatus.org_id == org_id,
+                TerritoryStatus.status == TerritoryStatusEnum.OCCUPIED,
+            )
+        )
+        if mission:
+            tile_stmt = tile_stmt.where(TerritoryStatus.mission_id == mission.mission_id)
+        organization_tile_count = db.execute(tile_stmt).scalar_one()
+
+    return UserStatsResponse(
+        user_id=str(user.user_id),
+        nickname=user.user_name,
+        university=university,
+        capture_count=int(capture_stats.capture_count or 0),
+        unique_capture_count=int(capture_stats.unique_capture_count or 0),
+        contribution_score=int(capture_stats.contribution_score or 0),
+        organization_tile_count=int(organization_tile_count or 0),
     )
