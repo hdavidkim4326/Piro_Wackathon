@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import useGameStore from '../store/gameStore';
 import { useTiles } from '../hooks/useTiles'; // 🔥 [핵심 1] 서버 데이터를 가져오는 훅 연결
 
+const MotionDiv = motion.div
+
 // ─── 그리드 크기 상수 (도 단위, ~30m) ───────────────────────
 const LAT_STEP = 0.00027;
 const LNG_STEP = 0.00034;
@@ -259,26 +261,34 @@ export default function MapView({ center }) {
               backgroundSize: '40px 40px',
             }}
           />
-          <motion.div
+
+          <MotionDiv
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', damping: 20, delay: 0.2 }}
             className="relative z-10 text-center px-8"
           >
-            <motion.div
+            <MotionDiv
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-white/80 backdrop-blur-sm shadow-lg shadow-indigo-500/10 border border-white/60 flex items-center justify-center text-4xl"
             >
               🗺️
-            </motion.div>
+            </MotionDiv>
+
             <h2 className="text-xl font-extrabold text-slate-700 tracking-tight mb-2">
               지도 로딩 대기중
             </h2>
             <p className="text-sm text-slate-400 font-medium max-w-[260px] mx-auto leading-relaxed">
               카카오맵 연결을 준비하고 있습니다.
             </p>
-          </motion.div>
+
+            {center && (
+              <div className="mt-5 inline-flex flex-col gap-1 bg-white/70 backdrop-blur-sm rounded-xl px-4 py-3 text-[11px] font-medium text-slate-400">
+                <span>📍 {center.lat.toFixed(6)}, {center.lng.toFixed(6)}</span>
+              </div>
+            )}
+          </MotionDiv>
         </div>
       )}
     </div>

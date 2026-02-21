@@ -107,6 +107,12 @@ PostGIS 같은 GIS 라이브러리 없이 **단순 수학 연산**으로 지도�
 - [Node.js 20+](https://nodejs.org/) (로컬 프론트엔드 개발 시)
 - [Python 3.11+](https://www.python.org/) (로컬 백엔드 개발 시)
 
+### 학교 이메일 인증 SMTP 설정
+
+- 루트 `.env`의 `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SENDER`를 실제 계정값으로 설정
+- Gmail 사용 시 `SMTP_PASSWORD`는 일반 비밀번호가 아닌 **앱 비밀번호** 사용
+- `EMAIL_VERIFICATION_DEV_MODE=false`여야 실제 메일 발송
+
 ### 방법 1: Docker Compose로 한번에 실행 (권장)
 
 ```bash
