@@ -168,16 +168,9 @@ export default function TileInfoPanel() {
                     {isOwned ? `${selectedTile.owner_univ} 영토` : '빈 땅'}
                   </h3>
                 </div>
-                <p className="mt-0.5 text-[11px] font-medium text-slate-400">
-                  {selectedTile.grid_id}
-                </p>
+  
               </div>
 
-              <span className={`shrink-0 rounded-xl px-2.5 py-1 text-[13px] font-bold ${
-                isOwned ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'
-              }`}>
-                Lv.{selectedTile.level || 0}
-              </span>
             </div>
 
             {/* ─── 상태 정보 칩 ─── */}
@@ -196,7 +189,7 @@ export default function TileInfoPanel() {
               </span>
 
               {isAtTile && (
-                <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-600">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-[#DF7E66]/10 px-2.5 py-1 text-[11px] font-bold text-[#DF7E66]">
                   📍 현재 위치
                 </span>
               )}
@@ -214,14 +207,14 @@ export default function TileInfoPanel() {
                 ? 'bg-rose-50 text-rose-600'
                 : isMyTile
                   ? 'bg-emerald-50 text-emerald-600'
-                  : 'bg-indigo-50 text-indigo-600'
+                  : 'bg-[#DF7E66]/10 text-[#DF7E66]'
             }`}>
               {tauntText}
             </div>
 
             {/* ─── 위치 안내 (현재 타일 아닐 때) ─── */}
             {!isAtTile && (
-              <div className="mb-3 rounded-xl bg-slate-50 px-3.5 py-2.5 text-[12px] font-medium text-slate-500">
+              <div className="mb-3 rounded-xl bg-[#EBB865]/30 px-3.5 py-2.5 text-[12px] font-medium text-[#8B5A2B]">
                 📌 이 타일로 이동해야 점령할 수 있어요.
                 {!location && ' (위치를 먼저 켜주세요)'}
               </div>
@@ -232,10 +225,10 @@ export default function TileInfoPanel() {
               <button
                 onClick={handleStartMission}
                 disabled={isPending || !isAtTile}
-                className={`flex-1 rounded-2xl px-4 py-3.5 text-[15px] font-bold text-white shadow-lg transition-all active:scale-[0.97] disabled:opacity-40 disabled:shadow-none ${
+                className={`flex-1 rounded-2xl px-4 py-3.5 text-[15px] font-bold text-white shadow-xl transition-all active:scale-[0.97] disabled:opacity-40 disabled:shadow-none ${
                   isEnemyTile
-                    ? 'bg-rose-500 shadow-rose-500/20'
-                    : 'bg-indigo-600 shadow-indigo-600/20'
+                    ? 'bg-rose-500 shadow-rose-500/40'
+                    : 'bg-[#D97A5C] shadow-[#D97A5C]/50 hover:shadow-[#D97A5C]/70'
                 }`}
               >
                 {actionLabel()}
