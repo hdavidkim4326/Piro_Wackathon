@@ -1,5 +1,9 @@
+/* 🌿 고운 돋움 (구글 폰트) */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
+
 @import "tailwindcss";
 
+/* ─── 커스텀 CSS 변수 (라이트 게이미피드 테마) ────────────── */
 @theme {
   --color-primary: #6366f1;
   --color-primary-dark: #4f46e5;
@@ -11,6 +15,16 @@
   --color-glass-heavy: rgba(255, 255, 255, 0.95);
   --color-glass-nav: rgba(15, 23, 42, 0.88);
 }
+
+/* 🐾 메모먼트 꾹꾹체 (로컬 파일) */
+@font-face {
+  font-family: 'MemomentKkukkukk';
+  src: url('/games/fonts/MemomentKkukkukk.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 *,
 *::before,
@@ -29,7 +43,7 @@ body,
 }
 
 body {
-  font-family: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system,
+  font-family: 'Gowun Dodum', 'Pretendard Variable', 'Pretendard', -apple-system,
     BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #f1f5f9;
   color: #1e293b;
