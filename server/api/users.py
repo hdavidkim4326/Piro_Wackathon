@@ -1,14 +1,14 @@
 """
-유저 API 라우터 — 동기 버전
-─────────────────────────
-이메일 인증 + 회원가입 엔드포인트.
-DB 팀원의 SQLAlchemy 2.0 모델(User, Organization, UserOrganization)에 맞게 전환.
-
-[매핑]
-  프론트 nickname  →  User.user_name
-  프론트 university →  Organization.org_name (이메일 도메인에서 추출)
+유저 API 라우터 — 인증 + 로그인 + 회원가입
+──────────────────────────────────────────
+[엔드포인트]
+  POST /send-code    이메일로 인증 코드 발송
+  POST /verify-code  인증 코드 확인
+  POST /signup       회원가입 (비밀번호 포함)
+  POST /login        로그인
 """
 
+import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -29,142 +29,147 @@ from core.email_verification import (
 )
 from database import get_db
 from models import OccupationCategory, Organization, User, UserOrganization
-from schemas import UserRead
+from schemas import LoginRequest, LoginResponse, UserRead
 
 router = APIRouter()
 
 DEFAULT_CATEGORY_NAME = "대학교"
 
 
+def _hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def _verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  스키마
+#  로컬 스키마 (이 파일 전용)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-class VerifyEmailRequest(BaseModel):
-    action: str
+class SendCodeRequest(BaseModel):
     email: str
-    code: str | None = None
 
 
-class VerifyEmailResponse(BaseModel):
+class SendCodeResponse(BaseModel):
     success: bool
     message: str
     university: str | None = None
     dev_code: str | None = None
 
 
-class SignupSubmitRequest(BaseModel):
+class VerifyCodeRequest(BaseModel):
     email: str
-    nickname: str
+    code: str
+
+
+class VerifyCodeResponse(BaseModel):
+    success: bool
+    message: str
     university: str | None = None
 
 
-class SignupSubmitResponse(BaseModel):
+class SignupRequest(BaseModel):
+    email: str
+    nickname: str
+    password: str
+
+
+class SignupResponse(BaseModel):
     success: bool
     message: str
     user: UserRead
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  엔드포인트
+#  POST /send-code
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-@router.post("/users/verify-email/", response_model=VerifyEmailResponse)
-def verify_email(body: VerifyEmailRequest):
-    """이메일 인증 코드 발송/검증 (DB 미사용, 인메모리 캐시)"""
+@router.post("/send-code", response_model=SendCodeResponse)
+def send_code(body: SendCodeRequest):
     email = normalize_email(body.email)
     if not is_valid_email(email):
-        raise HTTPException(status_code=400, detail="Invalid email format.")
+        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
 
-    action = body.action.strip().lower()
+    university = extract_university(email)
+    if not university:
+        raise HTTPException(status_code=400, detail="허용된 대학교 이메일 도메인이 아닙니다.")
 
-    if action == "send_email":
-        university = extract_university(email)
-        if not university:
-            raise HTTPException(
-                status_code=400,
-                detail="Only allowed university domains can request verification.",
-            )
+    code = generate_verification_code()
+    store_auth_code(email, code)
+    send_verification_email(email, code)
 
-        code = generate_verification_code()
-        store_auth_code(email, code)
-        send_verification_email(email, code)
-
-        return VerifyEmailResponse(
-            success=True,
-            message="Verification code sent.",
-            university=university,
-            dev_code=code if settings.EMAIL_VERIFICATION_DEV_MODE else None,
-        )
-
-    if action == "check_number":
-        if not body.code:
-            raise HTTPException(status_code=400, detail="Verification code is required.")
-
-        if not verify_auth_code(email, body.code.strip()):
-            raise HTTPException(status_code=400, detail="Invalid or expired code.")
-
-        university = extract_university(email)
-        if not university:
-            raise HTTPException(status_code=400, detail="Email domain is not allowed.")
-
-        mark_email_verified(email, university)
-
-        return VerifyEmailResponse(
-            success=True,
-            message="Email verification succeeded.",
-            university=university,
-        )
-
-    raise HTTPException(status_code=400, detail="Unsupported action.")
+    return SendCodeResponse(
+        success=True,
+        message="인증 코드가 발송되었습니다.",
+        university=university,
+        dev_code=code if settings.EMAIL_VERIFICATION_DEV_MODE else None,
+    )
 
 
-@router.post("/users/signup/submit/", response_model=SignupSubmitResponse)
-def signup_submit(
-    body: SignupSubmitRequest,
-    db: Session = Depends(get_db),
-):
-    """
-    회원가입.
-    1. 인증된 이메일에서 대학교를 추출
-    2. User 생성 (user_name = nickname, email)
-    3. Organization 연결 (get or create)
-    4. UserOrganization 관계 생성
-    """
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  POST /verify-code
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@router.post("/verify-code", response_model=VerifyCodeResponse)
+def verify_code(body: VerifyCodeRequest):
     email = normalize_email(body.email)
     if not is_valid_email(email):
-        raise HTTPException(status_code=400, detail="Invalid email format.")
+        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
+
+    if not verify_auth_code(email, body.code.strip()):
+        raise HTTPException(status_code=400, detail="인증 코드가 틀리거나 만료되었습니다.")
+
+    university = extract_university(email)
+    if not university:
+        raise HTTPException(status_code=400, detail="허용된 대학교 이메일이 아닙니다.")
+
+    mark_email_verified(email, university)
+
+    return VerifyCodeResponse(
+        success=True,
+        message="이메일 인증이 완료되었습니다.",
+        university=university,
+    )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  POST /signup
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@router.post("/signup", response_model=SignupResponse)
+def signup(body: SignupRequest, db: Session = Depends(get_db)):
+    email = normalize_email(body.email)
+    if not is_valid_email(email):
+        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
 
     nickname = body.nickname.strip()
     if len(nickname) < 2 or len(nickname) > 30:
-        raise HTTPException(
-            status_code=400,
-            detail="Nickname must be between 2 and 30 characters.",
-        )
+        raise HTTPException(status_code=400, detail="닉네임은 2~30자여야 합니다.")
+
+    if len(body.password) < 4:
+        raise HTTPException(status_code=400, detail="비밀번호는 4자 이상이어야 합니다.")
 
     verified_university = get_verified_university(email)
     if not verified_university:
-        raise HTTPException(
-            status_code=400,
-            detail="Email must be verified before signup.",
-        )
+        raise HTTPException(status_code=400, detail="이메일 인증을 먼저 완료해주세요.")
 
-    if body.university and body.university.strip() != verified_university:
-        raise HTTPException(
-            status_code=400,
-            detail="University does not match verified email domain.",
-        )
+    existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=409, detail="이미 가입된 이메일입니다.")
 
-    # ── User 생성 ────────────────────────────────────────────
-    user = User(user_name=nickname, email=email)
+    user = User(
+        user_name=nickname,
+        email=email,
+        password_hash=_hash_password(body.password),
+    )
     db.add(user)
     db.flush()
 
-    # ── Organization get/create ──────────────────────────────
     category = db.execute(
         select(OccupationCategory).where(OccupationCategory.name == DEFAULT_CATEGORY_NAME)
     ).scalar_one_or_none()
-
     if not category:
         category = OccupationCategory(name=DEFAULT_CATEGORY_NAME)
         db.add(category)
@@ -176,28 +181,57 @@ def signup_submit(
             Organization.category_id == category.category_id,
         )
     ).scalar_one_or_none()
-
     if not org:
         org = Organization(org_name=verified_university, category_id=category.category_id)
         db.add(org)
         db.flush()
 
-    # ── UserOrganization 관계 생성 ───────────────────────────
-    user_org = UserOrganization(user_id=user.user_id, org_id=org.org_id)
-    db.add(user_org)
-
+    db.add(UserOrganization(user_id=user.user_id, org_id=org.org_id))
     db.commit()
     db.refresh(user)
 
     clear_verification_state(email)
 
-    return SignupSubmitResponse(
+    return SignupResponse(
         success=True,
-        message="Signup complete.",
+        message="가입이 완료되었습니다.",
         user=UserRead(
             id=str(user.user_id),
             nickname=user.user_name,
             university=verified_university,
+            created_at=user.created_at.isoformat(),
+        ),
+    )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  POST /login
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@router.post("/login", response_model=LoginResponse)
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    email = normalize_email(body.email)
+
+    user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+    if not user or not user.password_hash:
+        raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다.")
+
+    if not _verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다.")
+
+    university = db.execute(
+        select(Organization.org_name)
+        .join(UserOrganization, Organization.org_id == UserOrganization.org_id)
+        .where(UserOrganization.user_id == user.user_id)
+    ).scalar_one_or_none() or "미소속"
+
+    return LoginResponse(
+        success=True,
+        message="로그인 성공",
+        user=UserRead(
+            id=str(user.user_id),
+            nickname=user.user_name,
+            university=university,
             created_at=user.created_at.isoformat(),
         ),
     )

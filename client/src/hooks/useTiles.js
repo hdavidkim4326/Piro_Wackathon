@@ -2,7 +2,10 @@
  * 서버 데이터 훅 모음 (React Query)
  * ─────────────────────────────────
  * 타일·랭킹 등 서버에서 가져오는 데이터를 React Query로 관리한다.
- * Zustand 스토어의 mapBounds가 바뀔 때마다 타일을 자동 재요청한다.
+ *
+ * [점령 후 즉시 동기화 전략]
+ *   invalidateQueries → staleTime 무시하고 즉시 refetch
+ *   + refetchType: 'active' → 현재 마운트된 쿼리만 refetch
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -10,21 +13,14 @@ import { fetchTiles, occupyTile, fetchRanking } from '../lib/api'
 import useGameStore from '../store/gameStore'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  타일 관련 훅
+//  타일 훅
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/**
- * 현재 지도 뷰포트 내의 타일 목록을 조회하는 훅.
- * mapBounds가 변경될 때마다 자동으로 refetch된다.
- *
- * @returns {import('@tanstack/react-query').UseQueryResult}
- */
 export function useTiles() {
   const mapBounds = useGameStore((state) => state.mapBounds)
 
   return useQuery({
     queryKey: ['tiles', mapBounds],
-
     queryFn: () =>
       fetchTiles({
         minLat: mapBounds.minLat,
@@ -32,54 +28,47 @@ export function useTiles() {
         minLng: mapBounds.minLng,
         maxLng: mapBounds.maxLng,
       }),
-
-    // mapBounds가 없으면(지도 미로드) 쿼리 실행하지 않음
     enabled: !!mapBounds,
-
-    // 10초간 캐시 유지
-    staleTime: 10 * 1000,
-    // 🔥 [추가 1] 5초마다 백그라운드에서 최신 타일(땅 주인) 정보를 가져옴 (실시간 동기화)
-    refetchInterval: 5000, 
-    
-    // 🔥 [추가 2] 유저가 카톡을 보다가 다시 게임 화면(브라우저)으로 돌아왔을 때 즉시 갱신
+    staleTime: 5_000,
+    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
   })
 }
 
-/**
- * 타일 점령 뮤테이션 훅.
- * 점령 성공 시 타일 목록과 랭킹 캐시를 모두 무효화한다.
- *
- * @returns {import('@tanstack/react-query').UseMutationResult}
- */
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  점령 뮤테이션
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 export function useOccupyTile() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: occupyTile,
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tiles'] })
-      queryClient.invalidateQueries({ queryKey: ['ranking'] })
+    onSuccess: (data) => {
+      // staleTime을 무시하고 현재 마운트된 tiles/ranking 쿼리를 즉시 refetch
+      queryClient.invalidateQueries({
+        queryKey: ['tiles'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['ranking'],
+        refetchType: 'active',
+      })
+
+      console.log('[useOccupyTile] 점령 성공, 타일 갱신 트리거:', data)
     },
   })
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  랭킹 관련 훅
+//  랭킹 훅
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/**
- * 대학교별 점령 랭킹을 조회하는 훅.
- * 30초마다 자동으로 갱신된다.
- *
- * @param {number} [limit=10] - 가져올 최대 순위 수
- * @returns {import('@tanstack/react-query').UseQueryResult}
- */
 export function useRanking(limit = 10) {
   return useQuery({
     queryKey: ['ranking', limit],
     queryFn: () => fetchRanking(limit),
-    staleTime: 30 * 1000,
+    staleTime: 30_000,
   })
 }

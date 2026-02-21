@@ -1,15 +1,17 @@
 /**
- * 카카오맵 컴포넌트 (실시간 서버 연동 완벽 병합본)
- * ────────────────────────────
- * [기능 보완] useTiles 훅 연동, 실시간 서버 데이터 덮어쓰기(Merge), 생명주기 렌더링 버그 수정
- * [기존 로직] 클라이언트 그리드 계산, 마커, idle 이벤트, cleanup 유지
- * [내 디자인] 라이트 글래스모피즘 플레이스홀더, 대학교별 컬러, framer-motion 애니메이션 유지
+ * 카카오맵 컴포넌트 (색상 버그 완벽 수정본)
+ * ─────────────────────────────────────────
+ * [버그 수정 내역]
+ *   1. fillColor를 rgba → hex로 변경 (카카오맵 API 호환)
+ *   2. getUnivColor에 trim() 적용 + unknown 대학 눈에 띄는 색상 추가
+ *   3. drawPolygonsRef 패턴으로 idle handler stale closure 버그 해결
+ *   4. 디버깅용 console.log 추가
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import useGameStore from '../store/gameStore';
-import { useTiles } from '../hooks/useTiles'; // 🔥 [핵심 1] 서버 데이터를 가져오는 훅 연결
+import { useTiles } from '../hooks/useTiles';
 
 const MotionDiv = motion.div
 
@@ -18,25 +20,27 @@ const LAT_STEP = 0.00027;
 const LNG_STEP = 0.00034;
 const MAX_VISIBLE_TILES = 1200;
 
-// ─── 대학교별 폴리곤 색상 ───────────────────────────────────
+// ─── 대학교별 폴리곤 색상 (hex만 사용, 카카오맵 호환) ───────
 const UNIV_COLORS = {
-  서울대학교: { fill: 'rgba(59, 130, 246, 0.40)', stroke: '#3b82f6' },
-  연세대학교: { fill: 'rgba(56, 189, 248, 0.40)', stroke: '#38bdf8' },
-  고려대학교: { fill: 'rgba(239, 68, 68, 0.40)', stroke: '#ef4444' },
-  default: { fill: 'rgba(107, 114, 128, 0.05)', stroke: '#9ca3af' }, // 빈 땅은 더 연하게
+  서울대학교: { fill: '#3b82f6', stroke: '#2563eb', opacity: 0.40 },
+  연세대학교: { fill: '#38bdf8', stroke: '#0ea5e9', opacity: 0.40 },
+  고려대학교: { fill: '#ef4444', stroke: '#dc2626', opacity: 0.40 },
+  우리대학교: { fill: '#a855f7', stroke: '#7c3aed', opacity: 0.40 },
+  _unknown:  { fill: '#f97316', stroke: '#ea580c', opacity: 0.40 },
+  _empty:    { fill: '#cbd5e1', stroke: '#94a3b8', opacity: 0.04 },
 };
 
 /** @param {string|null} univ */
 function getUnivColor(univ) {
-  if (!univ) return UNIV_COLORS.default;
-  return UNIV_COLORS[univ] || UNIV_COLORS.default;
+  if (!univ) return UNIV_COLORS._empty;
+  const trimmed = univ.trim();
+  return UNIV_COLORS[trimmed] || UNIV_COLORS._unknown;
 }
 
-/** 뷰포트 bounds로부터 클라이언트에서 뼈대 격자(Grid)를 계산한다. */
+/** 뷰포트 bounds로부터 클라이언트에서 뼈대 격자를 계산한다. */
 function buildViewportTiles(bounds) {
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
-
   const minLat = sw.getLat();
   const maxLat = ne.getLat();
   const minLng = sw.getLng();
@@ -44,20 +48,17 @@ function buildViewportTiles(bounds) {
 
   const rowStart = Math.floor(minLat / LAT_STEP);
   const rowEnd = Math.floor(maxLat / LAT_STEP);
-
   const tiles = [];
 
   for (let row = rowStart; row <= rowEnd; row += 1) {
     const south = row * LAT_STEP;
     const north = south + LAT_STEP;
-
     const colStart = Math.floor(minLng / LNG_STEP);
     const colEnd = Math.floor(maxLng / LNG_STEP);
 
     for (let col = colStart; col <= colEnd; col += 1) {
       const west = col * LNG_STEP;
       const east = west + LNG_STEP;
-
       tiles.push({
         grid_id: `grid_${row}_${col}`,
         owner_univ: null,
@@ -69,11 +70,9 @@ function buildViewportTiles(bounds) {
           { lat: south, lng: east },
         ],
       });
-
       if (tiles.length >= MAX_VISIBLE_TILES) return tiles;
     }
   }
-
   return tiles;
 }
 
@@ -83,6 +82,7 @@ export default function MapView({ center }) {
   const overlaysRef = useRef([]);
   const idleHandlerRef = useRef(null);
   const markerRef = useRef(null);
+  const drawPolygonsRef = useRef(null);
 
   const [mapReady, setMapReady] = useState(false);
   const [tileCount, setTileCount] = useState(0);
@@ -90,7 +90,6 @@ export default function MapView({ center }) {
   const setMapBounds = useGameStore((s) => s.setMapBounds);
   const setSelectedTile = useGameStore((s) => s.setSelectedTile);
 
-  // 🔥 [핵심 2] React Query를 통해 백엔드에서 실시간 타일(땅 주인) 데이터를 가져옴
   const { data: serverTiles } = useTiles();
 
   /** 기존 폴리곤 오버레이 전부 제거 */
@@ -99,29 +98,41 @@ export default function MapView({ center }) {
     overlaysRef.current = [];
   }, []);
 
-  /** 🔥 [핵심 3] 빈 격자와 서버 데이터를 합쳐서(Merge) 진짜 지도를 그리는 함수 */
+  /**
+   * 빈 격자 + 서버 데이터를 합쳐서 폴리곤을 그린다.
+   * fillColor는 반드시 hex 문자열을 써야 카카오맵이 인식한다.
+   */
   const drawPolygons = useCallback(() => {
     if (!mapRef.current || !window.kakao?.maps) return;
-    
+
     const bounds = mapRef.current.getBounds();
     if (!bounds) return;
 
-    // 1. 뼈대 격자 만들기
     const baseGrid = buildViewportTiles(bounds);
 
-    // 2. 뼈대 위에 서버 데이터를 덮어씌움
+    // 서버 데이터를 O(1) 룩업용 Map으로 변환
+    const serverMap = new Map();
+    if (serverTiles && serverTiles.length > 0) {
+      serverTiles.forEach((t) => { serverMap.set(t.grid_id, t); });
+    }
+
     const mergedTiles = baseGrid.map((baseTile) => {
-      // 서버 데이터 중에 현재 격자와 아이디가 같은 땅이 있는지 검색
-      const realTile = serverTiles?.find((t) => t.grid_id === baseTile.grid_id);
-      return realTile
-        ? { ...baseTile, owner_univ: realTile.owner_univ, level: realTile.level }
+      const real = serverMap.get(baseTile.grid_id);
+      return real
+        ? { ...baseTile, owner_univ: real.owner_univ, level: real.level }
         : baseTile;
     });
 
+    // 디버깅: 점령된 타일이 있는지 콘솔에 출력
+    const owned = mergedTiles.filter((t) => t.owner_univ);
+    if (owned.length > 0) {
+      console.log('[MapView] 서버가 준 점령 타일:', owned);
+    }
+
     clearOverlays();
 
-    // 3. 지도 위에 칠하기
     const overlays = mergedTiles.map((tile) => {
+      const isOwned = !!tile.owner_univ;
       const color = getUnivColor(tile.owner_univ);
       const path = tile.polygon.map(
         (p) => new window.kakao.maps.LatLng(p.lat, p.lng)
@@ -130,14 +141,13 @@ export default function MapView({ center }) {
       const polygon = new window.kakao.maps.Polygon({
         map: mapRef.current,
         path,
-        strokeWeight: tile.owner_univ ? 2 : 1, // 주인이 있으면 테두리를 두껍게
+        strokeWeight: isOwned ? 2 : 1,
         strokeColor: color.stroke,
-        strokeOpacity: tile.owner_univ ? 0.9 : 0.4,
+        strokeOpacity: isOwned ? 0.9 : 0.3,
         fillColor: color.fill,
-        fillOpacity: tile.owner_univ ? 0.8 : 1,
+        fillOpacity: isOwned ? color.opacity : UNIV_COLORS._empty.opacity,
       });
 
-      // 클릭 시 바텀 시트 띄우기
       window.kakao.maps.event.addListener(polygon, 'click', () => {
         setSelectedTile(tile);
       });
@@ -147,16 +157,20 @@ export default function MapView({ center }) {
 
     overlaysRef.current = overlays;
     setTileCount(mergedTiles.length);
-  }, [clearOverlays, setSelectedTile, serverTiles]); // 서버 데이터(serverTiles)가 바뀌면 이 함수가 새로 고침됨
+  }, [clearOverlays, setSelectedTile, serverTiles]);
 
-  /** 지도를 움직이고 멈췄을 때 실행 (서버에 새 범위 요청) */
+  // drawPolygonsRef를 항상 최신으로 유지 → idle handler가 stale closure에 빠지지 않음
+  useEffect(() => {
+    drawPolygonsRef.current = drawPolygons;
+  }, [drawPolygons]);
+
+  /** 지도 idle 시 bounds 갱신 + 즉시 렌더 (ref를 통해 항상 최신 drawPolygons 호출) */
   const handleIdle = useCallback(() => {
     if (!mapRef.current) return;
     const bounds = mapRef.current.getBounds();
     const sw = bounds.getSouthWest();
     const ne = bounds.getNorthEast();
 
-    // Zustand 스토어 업데이트 -> useTiles 훅이 감지하고 서버에 GET 요청을 쏨
     setMapBounds({
       minLat: sw.getLat(),
       maxLat: ne.getLat(),
@@ -164,17 +178,17 @@ export default function MapView({ center }) {
       maxLng: ne.getLng(),
     });
 
-    drawPolygons(); // 당장 보이는 빈 땅이라도 먼저 그림
-  }, [setMapBounds, drawPolygons]);
+    drawPolygonsRef.current?.();
+  }, [setMapBounds]);
 
-  // 🔥 [핵심 4] 서버 데이터가 도착하거나 화면에 돌아왔을 때 지도를 자동으로 다시 그리기
+  // 서버 타일이 갱신되면 즉시 다시 그린다
   useEffect(() => {
     if (mapReady) {
       drawPolygons();
     }
   }, [mapReady, serverTiles, drawPolygons]);
 
-  // ─── 카카오맵 초기화 (무한 로딩 버그 완벽 해결) ──────────────────
+  // ─── 카카오맵 SDK 초기화 ────────────────────────────────────
   useEffect(() => {
     const checkKakaoReady = setInterval(() => {
       if (window.kakao && window.kakao.maps) {
@@ -194,24 +208,23 @@ export default function MapView({ center }) {
             position: new window.kakao.maps.LatLng(center.lat, center.lng),
           });
 
-          idleHandlerRef.current = handleIdle;
-          window.kakao.maps.event.addListener(map, 'idle', idleHandlerRef.current);
+          window.kakao.maps.event.addListener(map, 'idle', handleIdle);
 
-          handleIdle(); // 초기 1회 실행으로 bounds 셋팅
+          handleIdle();
           setMapReady(true);
         });
       }
     }, 100);
 
     return () => clearInterval(checkKakaoReady);
-  }, []); // 마운트 시 한 번만 실행되도록 빈 배열 고정
+  }, []);
 
-  // ─── 내 위치 갱신 시 지도 덜덜거림 버그 해결 ────────────────────
+  // ─── 내 위치 갱신 시 지도 중심 이동 ────────────────────────
   useEffect(() => {
     if (!mapRef.current || !window.kakao?.maps) return;
-    
+
     const currentCenter = mapRef.current.getCenter();
-    if (Math.abs(currentCenter.getLat() - center.lat) > 0.0001 || 
+    if (Math.abs(currentCenter.getLat() - center.lat) > 0.0001 ||
         Math.abs(currentCenter.getLng() - center.lng) > 0.0001) {
       const position = new window.kakao.maps.LatLng(center.lat, center.lng);
       mapRef.current.setCenter(position);
@@ -219,36 +232,29 @@ export default function MapView({ center }) {
     }
   }, [center.lat, center.lng]);
 
-  // ─── 컴포넌트 언마운트 시 리소스 정리 ─────────────────────
+  // ─── 언마운트 시 리소스 정리 ────────────────────────────────
   useEffect(() => {
     return () => {
-      if (mapRef.current && idleHandlerRef.current && window.kakao?.maps?.event) {
-        window.kakao.maps.event.removeListener(
-          mapRef.current,
-          'idle',
-          idleHandlerRef.current
-        );
+      if (mapRef.current && window.kakao?.maps?.event) {
+        window.kakao.maps.event.removeListener(mapRef.current, 'idle', handleIdle);
       }
       markerRef.current?.setMap(null);
       clearOverlays();
     };
-  }, [clearOverlays]);
+  }, [handleIdle, clearOverlays]);
 
   const sdkMissing = !mapReady && !window.kakao?.maps;
 
   return (
     <div className="absolute inset-0">
-      {/* 카카오맵 컨테이너 */}
       <div ref={mapContainerRef} className="h-full w-full" />
 
-      {/* 우상단 타일 카운터 뱃지 */}
       {tileCount > 0 && (
         <div className="absolute right-4 top-20 z-20 bg-white/80 backdrop-blur-md rounded-xl px-3 py-1.5 text-[11px] font-semibold text-slate-500 shadow-sm border border-white/60">
           30m grid: {tileCount.toLocaleString()} cells
         </div>
       )}
 
-      {/* SDK 미로드 시 라이트 모드 플레이스홀더 */}
       {sdkMissing && (
         <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center">
           <div
