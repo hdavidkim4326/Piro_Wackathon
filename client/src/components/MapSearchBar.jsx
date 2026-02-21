@@ -37,7 +37,7 @@ export default function MapSearchBar({ onPickPlace }) {
     <>
       <form
         onSubmit={onSubmit}
-        className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-5 py-6 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
+        className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-5 py-10 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

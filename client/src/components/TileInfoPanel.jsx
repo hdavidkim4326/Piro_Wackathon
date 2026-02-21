@@ -59,6 +59,7 @@ const UNIV_DOT_COLORS = {
   '연세대학교': '#0ea5e9',
   '고려대학교': '#ef4444',
   '한양대학교': '#a855f7',
+  '숙명여자대학교':'#0343aa'
 }
 
 const TAUNTS_EMPTY = [K.tauntEmpty1, K.tauntEmpty2, K.tauntEmpty3, K.tauntEmpty4]
@@ -222,7 +223,7 @@ export default function TileInfoPanel() {
                 </div>
                 {/* game2에서 추가된 grid_id 표시 (디자인 톤 앤 매너 맞춤) */}
                 <p className="mt-0.5 text-[11px] font-medium" style={{ color: '#A08372' }}>
-                  {selectedTile.grid_id}
+                  
                 </p>
               </div>
 
@@ -235,7 +236,6 @@ export default function TileInfoPanel() {
                     : { background: '#F5F0E8', color: '#A08372' }
                 }
               >
-                Lv.{selectedTile.level || 0}
               </span>
             </div>
 
