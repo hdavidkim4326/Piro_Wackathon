@@ -3,19 +3,17 @@
  * ────────────────
  * 마이페이지
  *
- * 레이아웃 (세 번째 사진 참고):
- *   ① 상단 헤더 — 대학 브랜드 컬러 배경 + 로고 + 닉네임 + 소속
- *   ② 점령 땅 카드 — 내 팀이 차지한 타일 수 + 진행 바
- *   ③ 메뉴 리스트 — 프로필 수정 →
- *   ④ 하단 액션 — 로그아웃 / 회원탈퇴
- *
- * 컬러: #FDCC80 / #EBB865 / #DAAC5D / #E79380 / #DF7E66
+ * 레이아웃:
+ * ① 상단 헤더 — 대학 브랜드 컬러 배경 + 로고 + 닉네임 + 소속
+ * ② 점령 땅 카드 — 내 팀이 차지한 타일 수 + 진행 바
+ * ③ 메뉴 리스트 — 프로필 수정, 데모 모드(복구됨!)
+ * ④ 하단 액션 — 로그아웃 / 회원탈퇴
  */
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useGame } from '../store/gameStore'
+import useGameStore, { useGame } from '../store/gameStore'
 import { getUnivAsset, getUnivColor, getUnivInitials } from '../lib/univAssets'
 import { logoutUser, fetchMyTileCount } from '../lib/api'
 
@@ -170,6 +168,35 @@ function MenuItem({ icon, label, sublabel, onClick, chevron = true }) {
   )
 }
 
+// ─── 🔥 복구된 데모 모드 토글 ─────────────────────────────────
+function DemoModeRow({ enabled, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="flex w-full items-center justify-between gap-3.5 border-t border-slate-100 px-5 py-4 text-left transition-colors"
+    >
+      <div className="flex min-w-0 items-center gap-3.5">
+        <span className="w-8 flex-shrink-0 text-center text-[22px]">📍</span>
+        <div className="min-w-0">
+          <p className="text-[14px] font-bold text-slate-700">데모 모드</p>
+          <p className="text-[11px] font-medium text-slate-400">지도 탭으로 위치 이동</p>
+        </div>
+      </div>
+      <div
+        className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${
+          enabled ? 'bg-rose-500' : 'bg-slate-200'
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${
+            enabled ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </div>
+    </button>
+  )
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  MyPage (메인 컴포넌트)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -177,6 +204,10 @@ export default function MyPage() {
   const navigate = useNavigate()
   const { state, dispatch } = useGame()
   const { user, occupiedTiles } = state
+  
+  // 🔥 복구된 Zustand State
+  const demoMode = useGameStore((s) => s.demoMode)
+  const setDemoMode = useGameStore((s) => s.setDemoMode)
 
   const [showDelete,     setShowDelete]     = useState(false)
   const [deleteLoading,  setDeleteLoading]  = useState(false)
@@ -196,20 +227,21 @@ export default function MyPage() {
   const rankings = calcRanking(occupiedTiles)
 
   // 내 팀 점령 타일 수 (서버 우선, 없으면 로컬)
-  const localTileCount = Object.values(occupiedTiles).filter(
-    (t) => t.university === user.university
+  const localTileCount = Object.values(occupiedTiles || {}).filter(
+    (t) => t?.university === user.university
   ).length
   const tileCount  = serverTileCount ?? localTileCount
-  const totalTiles = Object.keys(occupiedTiles).length
+  const totalTiles = Object.keys(occupiedTiles || {}).length
   const myRank     = rankings.findIndex((r) => r.university === user.university) + 1
 
-  // 대학 브랜드 컬러 (univAssets )
+  // 대학 브랜드 컬러 (univAssets)
   const brandColor = asset.color || getUnivColor(user.university)
 
   // ── 핸들러 ───────────────────────────────────────────────
   const handleLogout = () => {
     logoutUser()
     dispatch({ type: 'LOGOUT' })
+    navigate('/auth', { replace: true })
   }
 
   const handleDeleteConfirm = async () => {
@@ -222,6 +254,7 @@ export default function MyPage() {
       logoutUser()
       dispatch({ type: 'DELETE_ACCOUNT' })
       setDeleteLoading(false)
+      navigate('/auth', { replace: true })
     }
   }
 
@@ -298,6 +331,13 @@ export default function MyPage() {
           sublabel="닉네임·비밀번호 변경"
           onClick={() => navigate('/profile-edit')}
         />
+        {/* 🔥 복구된 데모 모드 버튼 */}
+        <button
+          onClick={() => setDemoMode(!demoMode)}
+          className="w-full border-t border-slate-100 px-5 py-3 text-left text-[13px] font-bold text-slate-600"
+        >
+          {`데모 모드 ${demoMode ? 'ON' : 'OFF'}`}
+        </button>
       </motion.div>
 
       {/* ━━━ ④ 하단 액션 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
