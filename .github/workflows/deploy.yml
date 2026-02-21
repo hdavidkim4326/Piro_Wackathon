@@ -60,3 +60,4 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             docker compose up -d --build backend
+#           # ✅ 프론트엔드는 S3에서 바로 배포하므로 EC2에서는 백엔드만 재시작, docker compose 명령어도 backend 서비스만 타겟팅
