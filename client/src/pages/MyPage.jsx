@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore, { useGame } from '../store/gameStore'
 import { fetchMyTileCount, logoutUser } from '../lib/api'
 import { getUnivAsset, getUnivColor, getUnivInitials } from '../lib/univAssets'
@@ -184,21 +184,19 @@ function DemoModeRow({ enabled, onToggle }) {
       className="flex w-full items-center justify-between gap-3.5 border-t border-slate-100 px-5 py-4 text-left transition-colors"
     >
       <div className="flex min-w-0 items-center gap-3.5">
-        <span className="w-8 flex-shrink-0 text-center text-[22px]">\uD83D\uDCCD</span>
+        <span className="w-8 flex-shrink-0 text-center text-[22px]">📍</span>
         <div className="min-w-0">
-          <p className="text-[14px] font-bold text-slate-700">{K.demoMode}</p>
-          <p className="text-[11px] font-medium text-slate-400">{K.demoModeSub}</p>
+          <p className="text-[14px] font-bold text-slate-700">데모 모드</p>
+          <p className="text-[11px] font-medium text-slate-400">지도 탭으로 위치 이동 (시연용)</p>
         </div>
       </div>
       <div
-        className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${
-          enabled ? 'bg-rose-500' : 'bg-slate-200'
-        }`}
+        className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${enabled ? 'bg-rose-500' : 'bg-slate-200'
+          }`}
       >
         <div
-          className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${
-            enabled ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
+          className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${enabled ? 'translate-x-5' : 'translate-x-0.5'
+            }`}
         />
       </div>
     </button>
@@ -208,7 +206,8 @@ function DemoModeRow({ enabled, onToggle }) {
 export default function MyPage() {
   const navigate = useNavigate()
   const { state, dispatch } = useGame()
-  const { user, occupiedTiles = {} } = state
+  const { user, occupiedTiles } = state
+
   const demoMode = useGameStore((s) => s.demoMode)
   const setDemoMode = useGameStore((s) => s.setDemoMode)
 
@@ -235,12 +234,15 @@ export default function MyPage() {
   const safeEmail = user?.email || ''
   const asset = getUnivAsset(safeEmail)
 
-  const localTileCount = Object.values(occupiedTiles).filter(
-    (tile) => tile?.university === user.university
+  // 내 팀 점령 타일 수 (서버 우선, 없으면 로컬)
+  const localTileCount = Object.values(occupiedTiles || {}).filter(
+    (t) => t?.university === user.university
   ).length
   const tileCount = serverTileCount ?? localTileCount
-  const totalTiles = Object.keys(occupiedTiles).length
-  const myRank = rankings.findIndex((rankRow) => rankRow.university === user.university) + 1
+  const totalTiles = Object.keys(occupiedTiles || {}).length
+  const myRank = rankings.findIndex((r) => r.university === user.university) + 1
+
+  // 대학 브랜드 컬러 (univAssets)
   const brandColor = asset.color || getUnivColor(user.university)
 
   const handleLogout = () => {
