@@ -20,7 +20,13 @@ jobs:
           cache-dependency-path: client/package-lock.json # 캐시 기준 파일 경로
 
       - name: Install & Build Client
+        env:
+          VITE_KAKAO_MAP_KEY: ${{ secrets.VITE_KAKAO_MAP_KEY }}
         run: |
+          if [ -z "$VITE_KAKAO_MAP_KEY" ]; then
+            echo "VITE_KAKAO_MAP_KEY secret is not set"
+            exit 1
+          fi
           cd client
           npm install
           npm run build
