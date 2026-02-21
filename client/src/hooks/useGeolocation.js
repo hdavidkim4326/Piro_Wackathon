@@ -1,22 +1,36 @@
+/**
+ * GPS 위치 추적 훅
+ * ─────────────────
+ * demoMode가 켜져 있으면 실제 GPS를 사용하지 않는다.
+ * 대신 store의 location을 지도 클릭(MapView)으로 직접 제어한다.
+ */
+
 import { useEffect, useState } from 'react'
 import useGameStore from '../store/gameStore'
 
-const GEO_UNSUPPORTED_MESSAGE = 'This browser does not support geolocation.'
-
 export function useGeolocation() {
-  const setLocation = useGameStore((state) => state.setLocation)
-  const location = useGameStore((state) => state.location)
+  const setLocation = useGameStore((s) => s.setLocation)
+  const location = useGameStore((s) => s.location)
+  const demoMode = useGameStore((s) => s.demoMode)
 
   const geolocationAvailable =
     typeof navigator !== 'undefined' && Boolean(navigator.geolocation)
 
   const [error, setError] = useState(
-    geolocationAvailable ? null : GEO_UNSUPPORTED_MESSAGE
+    geolocationAvailable ? null : 'This browser does not support geolocation.'
   )
-  const [loading, setLoading] = useState(geolocationAvailable)
+  const [loading, setLoading] = useState(!demoMode && geolocationAvailable)
 
   useEffect(() => {
+    if (demoMode) {
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     if (!geolocationAvailable) return
+
+    setLoading(true)
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -28,15 +42,11 @@ export function useGeolocation() {
         setError(`Unable to read location: ${watchError.message}`)
         setLoading(false)
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     )
 
     return () => navigator.geolocation.clearWatch(watchId)
-  }, [geolocationAvailable, setLocation])
+  }, [demoMode, geolocationAvailable, setLocation])
 
-  return { location, error, loading }
+  return { location, error, loading, demoMode }
 }

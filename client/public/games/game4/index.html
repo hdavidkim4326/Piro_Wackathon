@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>같은 그림 찾기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <h2>🥜 같은 그림 찾기</h2>
+        <p>20초 안에 6쌍의 짝을 모두 찾으세요!</p>
+
+        <div id="game-play-area">
+            <div class="status-board">
+                <div class="time">⏱ 남은 시간: <span id="time-left">20</span>초</div>
+                <div class="score">✔ 맞춘 갯수: <span id="match-count">0</span>/6</div>
+            </div>
+
+            <div id="card-grid"></div>
+            
+            <div id="ready-cover">
+                 <button id="start-btn">게임 시작!</button>
+            </div>
+        </div>
+
+        <div id="result-modal" class="hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">결과</h3>
+                <p id="modal-message">메시지 내용</p>
+                <button id="modal-close-btn">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../gameBridge.js"></script>`r`n    <script src="script.js"></script>
+</body>
+</html>

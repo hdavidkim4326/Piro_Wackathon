@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
+
+@font-face {
+    font-family: 'MemomentKkukkukk';
+    src: url('../fonts/MemomentKkukkukk.woff') format('woff');
+    font-weight: normal; font-style: normal; font-display: swap;
+}
+
+body {
+    margin: 0; padding: 0; font-family: 'Gowun Dodum', sans-serif;
+    background-color: #fff9f0; display: flex; justify-content: center; align-items: center;
+    height: 100vh; user-select: none; touch-action: manipulation;
+}
+
+#game-container {
+    background: white; padding: 20px; border-radius: 20px; border: 3px solid #ffe8cc;
+    box-shadow: 0 10px 30px rgba(139, 69, 19, 0.1); text-align: center; width: 320px;
+    position: relative; overflow: hidden;
+}
+
+h2 { margin-top: 0; margin-bottom: 10px; color: #5d4037; font-size: 24px; font-family: 'MemomentKkukkukk', sans-serif; }
+p { color: #8d6e63; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
+
+#game-play-area { position: relative; padding: 10px; border-radius: 16px; }
+
+.status-board {
+    display: flex; justify-content: space-between; background: #fff4e6;
+    padding: 10px 15px; border-radius: 10px; margin-bottom: 15px;
+    font-weight: bold; font-size: 14px; color: #d9480f;
+}
+.time { color: #f03e3e; }
+.score { color: #e67700; }
+
+#target-box {
+    width: 100%; height: 80px; background-color: #ffe8cc; border-radius: 15px;
+    display: flex; justify-content: center; align-items: center; margin-bottom: 15px;
+    box-shadow: inset 0 3px 6px rgba(139, 69, 19, 0.1); transition: background-color 0.3s;
+}
+
+#target-name { font-size: 24px; font-weight: 900; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); font-family: 'MemomentKkukkukk', sans-serif; }
+
+#mixing-tray { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 5px; }
+
+.tray-slot {
+    width: 50px; height: 50px; border: 3px dashed #eaddcf; border-radius: 50%;
+    background-color: #fff9f0; transition: background-color 0.2s, border 0.2s;
+}
+
+.tray-plus { font-size: 24px; font-weight: bold; color: #8d6e63; }
+
+#feedback-text { font-size: 14px; font-weight: bold; color: #8d6e63; margin-bottom: 20px; height: 20px; }
+
+#palette { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+
+.color-btn {
+    flex: 1; height: 60px; border: none; border-radius: 12px; color: white;
+    font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.1s; font-family: 'MemomentKkukkukk', sans-serif;
+}
+.color-btn:active { transform: scale(0.92); }
+
+#reset-tray-btn {
+    width: 100%; padding: 10px; background: #fff4e6; color: #d9480f; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; font-family: 'MemomentKkukkukk', sans-serif;
+}
+#reset-tray-btn:active { background: #ffe8cc; }
+
+#ready-cover {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.5); backdrop-filter: blur(5px);
+    border-radius: 16px; display: flex; justify-content: center; align-items: center; z-index: 20;
+}
+
+#start-btn {
+    padding: 12px 24px; background: #8d6e63; color: white; border: none;
+    border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; font-family: 'MemomentKkukkukk', sans-serif;
+    box-shadow: 0 4px 10px rgba(141, 110, 99, 0.4);
+}
+#start-btn:active { transform: scale(0.95); }
+
+/* 모달 공통 */
+#result-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px); display: flex; justify-content: center; align-items: center; z-index: 30; opacity: 0; visibility: hidden; transition: opacity 0.2s ease-in-out; }
+#result-modal.show { opacity: 1; visibility: visible; }
+.modal-content { background: white; padding: 25px 20px; border-radius: 20px; border: 3px solid #ffe8cc; box-shadow: 0 10px 20px rgba(139, 69, 19, 0.2); width: 75%; text-align: center; transform: scale(0.8); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+#result-modal.show .modal-content { transform: scale(1); }
+#modal-title { margin-top: 0; margin-bottom: 10px; font-size: 22px; font-family: 'MemomentKkukkukk', sans-serif; }
+#modal-message { font-size: 15px; color: #8d6e63; margin-bottom: 20px; line-height: 1.4; }
+#modal-close-btn { padding: 10px 24px; background: #e67700; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: 'MemomentKkukkukk', sans-serif; box-shadow: 0 4px 10px rgba(230, 119, 0, 0.3); }
+#modal-close-btn:active { background: #d9480f; transform: scale(0.95); }

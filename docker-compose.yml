@@ -1,60 +1,39 @@
-  # ============================================================
-  # Campus Turf War - Docker Compose 설정
-  # 로컬 개발 환경에서 PostgreSQL, 백엔드, 프론트엔드를 한번에 실행
-  # ============================================================
+# ============================================================
+# Campus Turf War - Docker Compose 설정 (원격 DB 연결 모드)
+# 로컬 개발 환경에서 백엔드와 프론트엔드만 가볍게 실행
+# ============================================================
 
-  services:
-    # ─── PostgreSQL 데이터베이스 ────────────────────────────────
-    postgres:
-      image: postgres:15-alpine
-      container_name: campusturf_db
-      restart: unless-stopped
-      ports:
-        - "5433:5432"
-      environment:
-        POSTGRES_USER: ${POSTGRES_USER:-campusturf}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusturf1234}
-        POSTGRES_DB: ${POSTGRES_DB:-campusturf_db}
-      volumes:
-        - pgdata:/var/lib/postgresql/data
-      healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U campusturf -d campusturf_db"]
-        interval: 5s
-        timeout: 5s
-        retries: 5
+services:
+  # ─── FastAPI 백엔드 서버 ───────────────────────────────────
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: campusturf_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    # ✅ DB가 없으므로 depends_on 삭제, env만 읽어서 AWS로 바로 돌진!
+    env_file:
+      - ./server/.env
+    volumes:
+      - ./server:/app
 
-    # ─── FastAPI 백엔드 서버 ───────────────────────────────────
-    backend:
-      build:
-        context: ./server
-        dockerfile: Dockerfile
-      container_name: campusturf_backend
-      restart: unless-stopped
-      ports:
-        - "8000:8000"
-      environment:
-        DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-campusturf}:${POSTGRES_PASSWORD:-campusturf1234}@postgres:5432/${POSTGRES_DB:-campusturf_db}
-      depends_on:
-        postgres:
-          condition: service_healthy
-      volumes:
-        - ./server:/app
+  # ─── React 프론트엔드 (Vite 개발 서버) ────────────────────
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: campusturf_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./client/.env
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - backend
 
-    # ─── React 프론트엔드 (Vite 개발 서버) ────────────────────
-    frontend:
-      build:
-        context: ./client
-        dockerfile: Dockerfile
-      container_name: campusturf_frontend
-      restart: unless-stopped
-      ports:
-        - "5173:5173"
-      volumes:
-        - ./client:/app
-        - /app/node_modules
-      depends_on:
-        - backend
-
-  volumes:
-    pgdata:
-    
+# ✅ volumes에 있던 pgdata(DB 저장소)도 이제 필요 없으므로 완전 삭제!

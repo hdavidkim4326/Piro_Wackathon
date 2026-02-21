@@ -1,37 +1,38 @@
 /**
  * 앱 루트 컴포넌트
- * ────────────────
- * React Router로 페이지 라우팅을 설정하고,
- * 모든 페이지에 공통으로 들어가는 하단 네비게이션 바를 렌더링한다.
  */
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import Home from './pages/Home'
+import Events from './pages/Events'
 import Ranking from './pages/Ranking'
-import Profile from './pages/Profile'
+import MyPage from './pages/MyPage'
+import ProfileEdit from './pages/ProfileEdit'
+import AuthPage from './pages/AuthPage'
 import BottomNav from './components/BottomNav'
 
-/**
- * 앱의 최상위 컴포넌트.
- * BrowserRouter 안에 페이지 라우팅과 전역 UI(BottomNav)를 배치한다.
- */
 export default function App() {
   return (
-    <BrowserRouter>
-      <div className="h-screen flex flex-col bg-surface">
-        {/* 페이지 라우팅 — flex-1로 남은 공간을 모두 차지 */}
-        <div className="flex-1 overflow-hidden">
+    <div className="min-h-screen bg-slate-200 flex justify-center">
+      <div
+        className="w-full max-w-[430px] h-screen bg-slate-50 overflow-hidden relative shadow-2xl"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top), 0px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom), 0px)',
+        }}
+      >
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/events" element={<Events />} />
             <Route path="/ranking" element={<Ranking />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<MyPage />} />
+            <Route path="/profile-edit" element={<ProfileEdit />} />
+            <Route path="/auth" element={<AuthPage />} />
           </Routes>
-        </div>
-
-        {/* 모든 페이지에 공통으로 표시되는 하단 네비게이션 */}
-        <BottomNav />
+          <BottomNav />
+        </BrowserRouter>
       </div>
-    </BrowserRouter>
+    </div>
   )
 }

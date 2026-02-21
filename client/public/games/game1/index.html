@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>광클 영토 확장</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <h2>🥜 광클 영토 확장</h2>
+        <p>10초 안에 60번 이상 터치해서<br>땅콩을 심으세요!</p>
+
+        <div id="game-play-area">
+            <div class="status-board">
+                <div class="time">⏱ <span id="time-left">10</span>초</div>
+                <div class="score">👆 <span id="current-score">0</span>번</div>
+            </div>
+
+            <button id="tap-btn" disabled>클릭!!</button>
+
+            <div id="ready-cover">
+                <button id="start-btn">게임 시작!</button>
+            </div>
+        </div>
+
+        <div id="result-modal" class="hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">결과</h3>
+                <p id="modal-message">메시지 내용</p>
+                <button id="modal-close-btn">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../gameBridge.js"></script>`r`n    <script src="script.js"></script>
+</body>
+</html>

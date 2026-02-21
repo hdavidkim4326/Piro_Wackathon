@@ -1,81 +1,144 @@
-/**
- * 랭킹 페이지
- * ───────────
- * 대학교별 점령 현황 순위를 보여준다.
- * MVP 단계에서는 더미 데이터를 표시한다.
- */
-
-// ─── 더미 랭킹 데이터 (추후 API 연동) ──────────────────────
-const DUMMY_RANKINGS = [
-  { rank: 1, university: '서울대학교', tiles: 142, color: '#3b82f6' },
-  { rank: 2, university: '연세대학교', tiles: 98, color: '#ef4444' },
-  { rank: 3, university: '고려대학교', tiles: 87, color: '#a855f7' },
-  { rank: 4, university: '한양대학교', tiles: 65, color: '#f59e0b' },
-  { rank: 5, university: '성균관대학교', tiles: 43, color: '#22c55e' },
-]
-
-/**
- * 랭킹 페이지 컴포넌트.
- * 대학교별 점령 타일 수를 기준으로 순위를 표시한다.
- */
 export default function Ranking() {
-  const maxTiles = DUMMY_RANKINGS[0]?.tiles || 1
+  // 원래 코드는 잠시 주석 처리!
+  // const { data: rankings, isLoading, isError } = useRanking()
+
+  // 🥜 임의로 만든 귀여운 더미 데이터 (테스트용)
+  const rankings = [
+    { rank: 1, university: "땅콩대학교", tile_count: 152 },
+    { rank: 2, university: "아몬드대학교", tile_count: 130 },
+    { rank: 3, university: "호두대학교", tile_count: 115 },
+    { rank: 4, university: "피스타치오대", tile_count: 98 },
+    { rank: 5, university: "마카다미아대", tile_count: 85 },
+    { rank: 6, university: "캐슈넛대학교", tile_count: 72 },
+    { rank: 7, university: "해바라기씨대", tile_count: 60 },
+    { rank: 8, university: "잣대학교", tile_count: 45 },
+    { rank: 9, university: "호박씨대학교", tile_count: 30 },
+    { rank: 10, university: "헤이즐넛대학", tile_count: 12 },
+  ];
+  const isLoading = false;
+  const isError = false;
+  //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+  const first = rankings?.find((r) => r.rank === 1)
+  const second = rankings?.find((r) => r.rank === 2)
+  const third = rankings?.find((r) => r.rank === 3)
+  const others = rankings?.filter((r) => r.rank > 3) || []
 
   return (
-    <div className="h-full overflow-y-auto pb-20">
-      {/* 헤더 */}
-      <header className="bg-surface/80 backdrop-blur-md border-b border-surface-light px-4 py-3">
-        <h1 className="text-lg font-bold text-primary max-w-lg mx-auto">
-          대학교 랭킹
-        </h1>
+    <div
+      className="h-full overflow-y-auto bg-[#fff9f0] pb-32"
+      style={{ fontFamily: "'Gowun Dodum', sans-serif" }}
+    >
+      <header className="sticky top-0 z-20 border-b-[3px] border-[#ffd8a8] bg-[#fff9f0]/90 px-5 py-5 backdrop-blur-md shadow-sm">
+        <div className="mx-auto max-w-lg flex items-center justify-center gap-2">
+          <span className="text-3xl drop-shadow-md">🥜</span>
+          <h1
+            className="text-center text-3xl font-black tracking-widest text-[#d9480f]"
+            style={{
+              fontFamily: "'MemomentKkukkukk', sans-serif",
+              textShadow: "2px 2px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff"
+            }}
+          >
+            이달의 랭킹
+          </h1>
+          <span className="text-3xl drop-shadow-md">🥜</span>
+        </div>
       </header>
 
-      {/* 랭킹 리스트 */}
-      <div className="max-w-lg mx-auto p-4 space-y-3">
-        {DUMMY_RANKINGS.map((item) => (
-          <div
-            key={item.rank}
-            className="bg-surface-light rounded-xl p-4 flex items-center gap-4"
-          >
-            {/* 순위 뱃지 */}
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
-                item.rank <= 3
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-surface text-text-secondary'
-              }`}
-            >
-              {item.rank}
-            </div>
+      <div className="mx-auto max-w-lg">
+        {isLoading && (
+          <div className="py-20 text-center font-bold text-[#8d6e63]">
+            땅콩 랭킹을 불러오는 중... 🥜
+          </div>
+        )}
+        {isError && (
+          <div className="py-20 text-center font-bold text-[#f03e3e]">
+            💦 랭킹을 불러오지 못했어요.
+          </div>
+        )}
+        {!isLoading && !isError && rankings?.length === 0 && (
+          <div className="py-20 text-center font-bold text-[#8d6e63]">
+            아직 점령된 대학교가 없어요!
+          </div>
+        )}
 
-            {/* 대학 정보 + 바 */}
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-baseline mb-2">
-                <span className="font-semibold text-text-primary truncate">
+        {/* 🏆 탑 3 시상대 영역 */}
+        {!isLoading && !isError && rankings?.length > 0 && (
+          <div className="flex items-end justify-center gap-3 px-4 pt-10 pb-8">
+            {second ? (
+              <div className="flex w-24 flex-col items-center">
+                <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#ffe8cc] bg-white text-2xl shadow-sm">
+                  🏫
+                </div>
+                <div className="flex h-32 w-full flex-col items-center justify-start rounded-t-2xl bg-[#ffe8cc] pt-3 shadow-md">
+                  <span className="text-xl font-bold text-[#d9480f]" style={{ fontFamily: "'MemomentKkukkukk', sans-serif" }}>2위</span>
+                  <span className="w-full truncate px-1 text-center text-sm font-bold text-[#5d4037]">{second.university}</span>
+                  <span className="mt-1 text-xs font-semibold text-[#8d6e63]">{second.tile_count} 땅콩</span>
+                </div>
+              </div>
+            ) : <div className="w-24"></div>}
+
+            {first && (
+              <div className="flex w-28 flex-col items-center">
+                <div className="z-10 mb-[-10px] text-3xl">👑</div>
+                <div className="z-10 mb-2 flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#ff922b] bg-white text-3xl shadow-md">
+                  🥜
+                </div>
+                <div className="flex h-40 w-full flex-col items-center justify-start rounded-t-2xl bg-gradient-to-t from-[#ffd8a8] to-[#ff922b] pt-4 shadow-lg">
+                  <span className="text-2xl font-bold text-white drop-shadow-md" style={{ fontFamily: "'MemomentKkukkukk', sans-serif" }}>1위</span>
+                  <span className="mt-1 w-full truncate px-1 text-center text-base font-extrabold text-[#5d4037]">{first.university}</span>
+                  <span className="mt-1 text-sm font-bold text-white">{first.tile_count} 땅콩</span>
+                </div>
+              </div>
+            )}
+
+            {third ? (
+              <div className="flex w-24 flex-col items-center">
+                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full border-4 border-[#ffe8cc] bg-white text-xl shadow-sm">
+                  🏫
+                </div>
+                <div className="flex h-24 w-full flex-col items-center justify-start rounded-t-2xl bg-[#ffe8cc] pt-2 shadow-md">
+                  <span className="text-xl font-bold text-[#d9480f]" style={{ fontFamily: "'MemomentKkukkukk', sans-serif" }}>3위</span>
+                  <span className="w-full truncate px-1 text-center text-sm font-bold text-[#5d4037]">{third.university}</span>
+                  <span className="mt-1 text-xs font-semibold text-[#8d6e63]">{third.tile_count} 땅콩</span>
+                </div>
+              </div>
+            ) : <div className="w-24"></div>}
+          </div>
+        )}
+
+        {/* 📋 4위 이하 리스트 영역 */}
+        {/* 💡 수정됨: 하단 네비게이션 바에 가리지 않도록 pb-10을 pb-36으로 대폭 늘렸습니다! */}
+        <div className="flex flex-col gap-3 pb-36 w-full items-center">
+          {others.map((item) => (
+            <div
+              key={item.rank}
+              className="flex w-[85%] max-w-[400px] items-center rounded-2xl border-2 border-[#ffe8cc] bg-white p-3 shadow-md transition-transform active:scale-95"
+            >
+              <div
+                className="w-10 text-center text-xl font-bold text-[#d9480f]"
+                style={{ fontFamily: "'MemomentKkukkukk', sans-serif" }}
+              >
+                {item.rank}
+              </div>
+
+              <div className="mx-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#ffe8cc] bg-[#fff4e6] text-xl">
+                🏫
+              </div>
+
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <span className="truncate text-lg font-bold text-[#5d4037]">
                   {item.university}
                 </span>
-                <span className="text-sm text-text-secondary ml-2">
-                  {item.tiles}칸
+                <span className="text-sm font-semibold text-[#8d6e63]">
+                  {item.tile_count} 땅콩
                 </span>
               </div>
-              {/* 점령 비율 바 */}
-              <div className="h-2 bg-surface rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${(item.tiles / maxTiles) * 100}%`,
-                    backgroundColor: item.color,
-                  }}
-                />
-              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <div className="h-28 w-full shrink-0"></div>
 
-        {/* 안내 문구 */}
-        <p className="text-center text-text-secondary text-xs pt-4">
-          랭킹은 실시간 점령 타일 수를 기준으로 갱신됩니다.
-        </p>
       </div>
     </div>
   )
