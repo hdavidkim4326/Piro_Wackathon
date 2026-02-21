@@ -2,79 +2,36 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [main, deploy]
+    branches: [ main ]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-${{ github.ref_name }}
+  group: deploy-main
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1) 프론트엔드 빌드 및 S3 배포
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
           cache-dependency-path: client/package-lock.json
 
-      - name: Validate required secrets
-        env:
-          VITE_KAKAO_MAP_KEY: ${{ secrets.VITE_KAKAO_MAP_KEY }}
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build client
+        working-directory: client
         run: |
-          set -euo pipefail
-
-          required_vars=(
-            VITE_KAKAO_MAP_KEY
-            VITE_API_BASE_URL
-            AWS_ACCESS_KEY_ID
-            AWS_SECRET_ACCESS_KEY
-            S3_BUCKET_NAME
-            CLOUDFRONT_DISTRIBUTION_ID
-            EC2_HOST
-            EC2_USERNAME
-            EC2_SSH_KEY
-            DATABASE_URL
-          )
-
-          for var_name in "${required_vars[@]}"; do
-            if [ -z "${!var_name:-}" ]; then
-              echo "Missing required secret: ${var_name}"
-              exit 1
-            fi
-          done
-
-          case "$VITE_API_BASE_URL" in
-            https://*|/api) ;;
-            *)
-              echo "VITE_API_BASE_URL must start with https:// or be /api"
-              exit 1
-              ;;
-          esac
-
-      - name: Install & Build Client
-        env:
-          VITE_KAKAO_MAP_KEY: ${{ secrets.VITE_KAKAO_MAP_KEY }}
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-        run: |
-          set -euo pipefail
-          cd client
-          npm ci --no-audit --no-fund
           npm run build
 
       - name: Configure AWS credentials
@@ -85,17 +42,14 @@ jobs:
           aws-region: ap-northeast-2
 
       - name: Deploy to S3
-        run: |
-          set -euo pipefail
-          aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        run: aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
       - name: CloudFront Invalidation
-        run: |
-          set -euo pipefail
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
 
+      # 2) EC2 백엔드 배포
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
@@ -103,17 +57,6 @@ jobs:
           script: |
             set -e
             cd ~/Piro_Wackathon
-            git fetch origin ${{ github.ref_name }} --prune
-            git reset --hard origin/${{ github.ref_name }}
-            git clean -fd
-
-            mkdir -p ./server
-            cat > ./server/.env <<EOF
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            REDIS_URL=${{ secrets.REDIS_URL }}
-            EOF
-            chmod 600 ./server/.env
-
-            docker compose stop frontend 2>/dev/null || true
-            docker compose rm -f frontend postgres 2>/dev/null || true
-            docker compose up -d --build --remove-orphans backend
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose up -d --build backend
