@@ -1,50 +1,86 @@
-/**
- * 카카오맵 컴포넌트
- * ─────────────────
- * react-kakao-maps-sdk를 사용해 카카오맵을 렌더링한다.
- * 지도 위에 타일(폴리곤)을 그리고, 사용자 위치 마커를 표시한다.
- *
- * [참고] 카카오맵 SDK를 사용하려면 index.html에 카카오맵 스크립트를 추가하고
- *        발급받은 앱 키를 설정해야 한다. MVP에서는 플레이스홀더로 동작한다.
- */
-
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import useGameStore from '../store/gameStore'
-import { useTiles, useOccupyTile } from '../hooks/useTiles'
 
-// ─── 대학교별 색상 매핑 ─────────────────────────────────────
+const LAT_STEP = 0.00027
+const LNG_STEP = 0.00034
+const MAX_VISIBLE_TILES = 1200
+
 const UNIV_COLORS = {
-  서울대학교: { fill: 'rgba(59, 130, 246, 0.35)', stroke: '#3b82f6' },
-  연세대학교: { fill: 'rgba(239, 68, 68, 0.35)', stroke: '#ef4444' },
-  고려대학교: { fill: 'rgba(168, 85, 247, 0.35)', stroke: '#a855f7' },
-  default: { fill: 'rgba(107, 114, 128, 0.15)', stroke: '#6b7280' },
+  default: { fill: 'rgba(107, 114, 128, 0.08)', stroke: '#6b7280' },
 }
 
-/**
- * 대학교 이름으로 색상 객체를 반환한다.
- * @param {string|null} univ - 대학교 이름
- * @returns {{ fill: string, stroke: string }}
- */
 function getUnivColor(univ) {
   if (!univ) return UNIV_COLORS.default
   return UNIV_COLORS[univ] || UNIV_COLORS.default
 }
 
-/**
- * 카카오맵 + 타일 오버레이를 렌더링하는 메인 맵 컴포넌트.
- *
- * @param {{ center: { lat: number, lng: number } }} props
- */
+function buildViewportTiles(bounds) {
+  const sw = bounds.getSouthWest()
+  const ne = bounds.getNorthEast()
+
+  const minLat = sw.getLat()
+  const maxLat = ne.getLat()
+  const minLng = sw.getLng()
+  const maxLng = ne.getLng()
+
+  const rowStart = Math.floor(minLat / LAT_STEP)
+  const rowEnd = Math.floor(maxLat / LAT_STEP)
+
+  const tiles = []
+
+  for (let row = rowStart; row <= rowEnd; row += 1) {
+    const south = row * LAT_STEP
+    const north = south + LAT_STEP
+
+    const colStart = Math.floor(minLng / LNG_STEP)
+    const colEnd = Math.floor(maxLng / LNG_STEP)
+
+    for (let col = colStart; col <= colEnd; col += 1) {
+      const west = col * LNG_STEP
+      const east = west + LNG_STEP
+
+      tiles.push({
+        grid_id: `grid_${row}_${col}`,
+        owner_univ: null,
+        level: 0,
+        polygon: [
+          { lat: south, lng: west },
+          { lat: north, lng: west },
+          { lat: north, lng: east },
+          { lat: south, lng: east },
+        ],
+      })
+
+      if (tiles.length >= MAX_VISIBLE_TILES) {
+        return tiles
+      }
+    }
+  }
+
+  return tiles
+}
+
 export default function MapView({ center }) {
+  const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
+  const overlaysRef = useRef([])
+  const idleHandlerRef = useRef(null)
+  const markerRef = useRef(null)
+
+  const [mapReady, setMapReady] = useState(Boolean(window.kakao?.maps))
+  const [tileCount, setTileCount] = useState(0)
+
   const setMapBounds = useGameStore((state) => state.setMapBounds)
   const setSelectedTile = useGameStore((state) => state.setSelectedTile)
-  const { data: tiles } = useTiles()
-  const occupyMutation = useOccupyTile()
 
-  // ─── 지도 뷰포트가 바뀔 때 bounds 업데이트 ─────────────────
-  const updateBounds = useCallback(() => {
-    if (!mapRef.current) return
+  const clearOverlays = useCallback(() => {
+    overlaysRef.current.forEach((polygon) => polygon.setMap(null))
+    overlaysRef.current = []
+  }, [])
+
+  const renderGrid = useCallback(() => {
+    if (!mapRef.current || !window.kakao?.maps) return
+
     const map = mapRef.current
     const bounds = map.getBounds()
     if (!bounds) return
@@ -58,53 +94,14 @@ export default function MapView({ center }) {
       minLng: sw.getLng(),
       maxLng: ne.getLng(),
     })
-  }, [setMapBounds])
 
-  // ─── 카카오맵 초기화 ──────────────────────────────────────
-  useEffect(() => {
-    // window.kakao가 없으면 (SDK 미로드) 플레이스홀더만 표시
-    if (!window.kakao || !window.kakao.maps) {
-      console.warn(
-        '[MapView] 카카오맵 SDK가 로드되지 않았습니다. ' +
-          'index.html에 카카오맵 스크립트를 추가하세요.'
-      )
-      return
-    }
+    const tiles = buildViewportTiles(bounds)
+    clearOverlays()
 
-    const container = document.getElementById('kakao-map')
-    if (!container) return
-
-    const options = {
-      center: new window.kakao.maps.LatLng(center.lat, center.lng),
-      level: 3,
-    }
-
-    const map = new window.kakao.maps.Map(container, options)
-    mapRef.current = map
-
-    // 최초 bounds 설정
-    updateBounds()
-
-    // 지도 이동/줌 이벤트에 bounds 업데이트 연결
-    window.kakao.maps.event.addListener(map, 'idle', updateBounds)
-
-    return () => {
-      window.kakao.maps.event.removeListener(map, 'idle', updateBounds)
-    }
-  }, [center, updateBounds])
-
-  // ─── 타일 폴리곤 그리기 ───────────────────────────────────
-  useEffect(() => {
-    if (!mapRef.current || !tiles || !window.kakao?.maps) return
-
-    const map = mapRef.current
-    const polygons = []
-
-    tiles.forEach((tile) => {
+    const overlays = tiles.map((tile) => {
       const color = getUnivColor(tile.owner_univ)
-
       const path = tile.polygon.map(
-        (p) => new window.kakao.maps.LatLng(p.lat, p.lng)
+        (point) => new window.kakao.maps.LatLng(point.lat, point.lng)
       )
 
       const polygon = new window.kakao.maps.Polygon({
@@ -112,55 +109,99 @@ export default function MapView({ center }) {
         path,
         strokeWeight: 1,
         strokeColor: color.stroke,
-        strokeOpacity: 0.8,
+        strokeOpacity: 0.6,
         fillColor: color.fill,
         fillOpacity: 1,
       })
 
-      // 타일 클릭 이벤트
       window.kakao.maps.event.addListener(polygon, 'click', () => {
         setSelectedTile(tile)
       })
 
-      polygons.push(polygon)
+      return polygon
     })
 
-    // 클린업: 기존 폴리곤 제거
-    return () => {
-      polygons.forEach((p) => p.setMap(null))
+    overlaysRef.current = overlays
+    setTileCount(tiles.length)
+  }, [clearOverlays, setMapBounds, setSelectedTile])
+
+  useEffect(() => {
+    const initMap = () => {
+      if (!mapContainerRef.current || mapRef.current || !window.kakao?.maps) {
+        return
+      }
+
+      const map = new window.kakao.maps.Map(mapContainerRef.current, {
+        center: new window.kakao.maps.LatLng(center.lat, center.lng),
+        level: 3,
+      })
+
+      mapRef.current = map
+      markerRef.current = new window.kakao.maps.Marker({
+        map,
+        position: new window.kakao.maps.LatLng(center.lat, center.lng),
+      })
+
+      idleHandlerRef.current = () => renderGrid()
+      window.kakao.maps.event.addListener(map, 'idle', idleHandlerRef.current)
+
+      renderGrid()
+      setMapReady(true)
     }
-  }, [tiles, setSelectedTile])
+
+    if (window.kakao?.maps?.load) {
+      window.kakao.maps.load(initMap)
+      return
+    }
+
+    if (window.kakao?.maps) {
+      initMap()
+    }
+  }, [center.lat, center.lng, renderGrid])
+
+  useEffect(() => {
+    if (!mapRef.current || !window.kakao?.maps) return
+
+    const position = new window.kakao.maps.LatLng(center.lat, center.lng)
+    mapRef.current.setCenter(position)
+    markerRef.current?.setPosition(position)
+  }, [center])
+
+  useEffect(() => {
+    return () => {
+      if (mapRef.current && idleHandlerRef.current && window.kakao?.maps?.event) {
+        window.kakao.maps.event.removeListener(
+          mapRef.current,
+          'idle',
+          idleHandlerRef.current
+        )
+      }
+
+      markerRef.current?.setMap(null)
+      clearOverlays()
+    }
+  }, [clearOverlays])
+
+  const sdkMissing = !mapReady && !window.kakao?.maps
 
   return (
     <div className="relative h-full w-full">
-      {/* 카카오맵 컨테이너 */}
-      <div id="kakao-map" className="h-full w-full" />
+      <div ref={mapContainerRef} className="h-full w-full" />
 
-      {/* 카카오맵 SDK 미로드 시 플레이스홀더 */}
-      {(!window.kakao || !window.kakao.maps) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-light/90">
-          <div className="text-center p-8">
-            <div className="text-6xl mb-4">🗺️</div>
-            <h2 className="text-xl font-bold text-text-primary mb-2">
-              지도 로딩 대기 중
+      <div className="absolute right-4 top-4 z-20 rounded-md bg-surface/85 px-3 py-2 text-xs text-text-secondary backdrop-blur-sm">
+        30m grid: {tileCount.toLocaleString()} cells
+      </div>
+
+      {sdkMissing && (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-light/90 p-6 text-center">
+          <div>
+            <h2 className="mb-2 text-lg font-bold text-text-primary">
+              Kakao map SDK is not loaded
             </h2>
-            <p className="text-text-secondary text-sm max-w-xs">
-              카카오맵 JavaScript SDK를 로드해주세요.
-              <br />
-              <code className="text-xs bg-surface px-2 py-1 rounded mt-2 inline-block">
-                index.html에 카카오맵 스크립트 추가 필요
-              </code>
+            <p className="text-sm text-text-secondary">
+              Add SDK script to <code>client/index.html</code> and set
+              <code> VITE_KAKAO_MAP_APP_KEY</code>.
             </p>
-
-            {/* 현재 위치 & 타일 데이터 디버그 정보 */}
-            {center && (
-              <div className="mt-4 p-3 bg-surface rounded-lg text-xs text-text-secondary">
-                <p>
-                  현재 위치: {center.lat.toFixed(6)}, {center.lng.toFixed(6)}
-                </p>
-                {tiles && <p>로드된 타일 수: {tiles.length}개</p>}
-              </div>
-            )}
           </div>
         </div>
       )}
