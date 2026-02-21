@@ -181,9 +181,16 @@ function endGame() {
     readyCover.style.display = 'flex';
     startBtn.textContent = "다시 하기";
 
-    window.parent.postMessage({
+    // 1. 보낼 데이터를 변수로 예쁘게 포장합니다.
+    const resultData = {
         type: 'GAME_RESULT',
-        gameId: 3,
+        gameId: 5,
         success: isSuccess
-    }, '*');
+    };
+
+    // 2. F12 콘솔창에 기록을 남깁니다! (내 눈으로 확인용)
+    console.log("📨 React로 날아갈 쪽지 내용:", resultData);
+
+    // 3. 부모 창으로 쪽지를 진짜 던집니다.
+    window.parent.postMessage(resultData, '*');
 }
