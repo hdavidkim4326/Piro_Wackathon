@@ -1,6 +1,15 @@
 /* ─── Tailwind CSS v4 진입점 ────────────────────────────── */
 @import "tailwindcss";
 
+/* 🌿 고운 돋움 & 🐾 메모먼트 꾹꾹체 추가! */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap');
+@font-face {
+  font-family: 'MemomentKkukkukk';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2410-1@1.0/MemomentKkukkkuk.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* ─── 커스텀 CSS 변수 (라이트 게이미피드 테마) ────────────── */
 @theme {
   --color-primary: #6366f1;
