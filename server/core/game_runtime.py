@@ -52,6 +52,8 @@ class BossState:
 _sessions: dict[str, GameSession] = {}
 _boss_states: dict[str, BossState] = {}
 _user_clicks: dict[tuple[str, str], int] = {}
+_boss_last_hitter: dict[str, str] = {}
+_boss_claimed: set[str] = set()
 _runtime_lock = Lock()
 
 
@@ -180,6 +182,7 @@ def apply_boss_hit(session_id: str, user_key: str) -> dict | None:
         boss.current_hp = max(0, boss.current_hp - boss.damage_per_hit)
         boss.updated_at = _now()
         session.score += boss.damage_per_hit
+        _boss_last_hitter[boss_key] = user_key
 
         if boss.current_hp == 0:
             session.status = "SUCCESS"
@@ -206,3 +209,33 @@ def mark_claimed(session_id: str) -> GameSession | None:
         if session.status == "SUCCESS":
             session.status = "CLAIMED"
         return session
+
+
+def reserve_boss_claim(boss_grid_id: str) -> dict:
+    """
+    Reserve a defeated boss for one-time DB claim application.
+    """
+    with _runtime_lock:
+        boss = _boss_states.get(boss_grid_id)
+        if not boss:
+            return {"ok": False, "reason": "boss_state_missing"}
+        if boss.current_hp > 0:
+            return {"ok": False, "reason": "boss_not_defeated"}
+        if boss_grid_id in _boss_claimed:
+            return {
+                "ok": True,
+                "already_claimed": True,
+                "last_hitter_user_key": _boss_last_hitter.get(boss_grid_id),
+            }
+
+        _boss_claimed.add(boss_grid_id)
+        return {
+            "ok": True,
+            "already_claimed": False,
+            "last_hitter_user_key": _boss_last_hitter.get(boss_grid_id),
+        }
+
+
+def release_boss_claim_reservation(boss_grid_id: str) -> None:
+    with _runtime_lock:
+        _boss_claimed.discard(boss_grid_id)

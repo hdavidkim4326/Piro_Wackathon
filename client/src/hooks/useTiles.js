@@ -9,7 +9,14 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchMyStats, fetchTiles, occupyTile, fetchRanking, fetchSpecialCenters } from '../lib/api'
+import {
+  claimTileGame,
+  fetchMyStats,
+  fetchRanking,
+  fetchSpecialCenters,
+  fetchTiles,
+  occupyTile,
+} from '../lib/api'
 import useGameStore from '../store/gameStore'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -80,6 +87,37 @@ export function useOccupyTile() {
       })
 
       console.log('[useOccupyTile] 점령 성공, 타일 갱신 트리거:', data)
+    },
+  })
+}
+
+export function useClaimSpecialMission() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ gridId, sessionId, userId }) =>
+      claimTileGame(gridId, sessionId, { userId }),
+    onSuccess: (data) => {
+      if (!data?.capture_applied) return
+
+      queryClient.invalidateQueries({
+        queryKey: ['tiles'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['ranking'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['user', 'stats'],
+        refetchType: 'active',
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['profile', 'me'],
+        refetchType: 'active',
+      })
+
+      console.log('[useClaimSpecialMission] special capture success', data)
     },
   })
 }

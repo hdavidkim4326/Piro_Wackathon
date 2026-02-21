@@ -80,6 +80,54 @@ export async function fetchMyStats(userId) {
   return res.data
 }
 
+function getPersistedUser() {
+  try {
+    const raw = localStorage.getItem('campus-turf-war')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed?.state?.user || null
+  } catch {
+    return null
+  }
+}
+
+export function logoutUser() {
+  // 이전 팀 코드 호환용 함수
+  return true
+}
+
+export async function fetchMyTileCount() {
+  const user = getPersistedUser()
+  if (!user?.id) return { count: 0 }
+
+  try {
+    const stats = await fetchMyStats(user.id)
+    return { count: Number(stats?.organization_tile_count || 0) }
+  } catch {
+    return { count: 0 }
+  }
+}
+
+export async function updateMyProfile(payload = {}) {
+  const user = getPersistedUser()
+  if (!user?.id) {
+    return { success: true, local_only: true }
+  }
+
+  try {
+    const res = await api.patch('/users/me', payload, {
+      headers: { 'X-User-Id': String(user.id) },
+    })
+    return res.data
+  } catch (error) {
+    // 서버 라우트가 아직 없더라도 화면 동작이 깨지지 않게 호환 처리
+    if ([404, 405].includes(error?.response?.status)) {
+      return { success: true, local_only: true }
+    }
+    throw error
+  }
+}
+
 /**
  * Fetch game configuration assigned to a tile.
  *
@@ -120,10 +168,17 @@ export async function submitTileGameAction(gridId, payload) {
  * @param {string} gridId
  * @param {string} sessionId
  */
-export async function claimTileGame(gridId, sessionId) {
-  const response = await api.post(`/games/${gridId}/claim`, {
-    session_id: sessionId,
-  })
+export async function claimTileGame(gridId, sessionId, options = {}) {
+  const headers = options?.userId
+    ? { 'X-User-Id': String(options.userId) }
+    : undefined
+  const response = await api.post(
+    `/games/${gridId}/claim`,
+    {
+      session_id: sessionId,
+    },
+    { headers }
+  )
   return response.data
 }
 
