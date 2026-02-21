@@ -11,6 +11,7 @@ import { motion } from 'framer-motion'
 
 // ─── 네비게이션 탭 정의 ─────────────────────────────────────
 const NAV_ITEMS = [
+  { to: '/', label: '이벤트', icon: EventIcon },
   { to: '/', label: '지도', icon: MapIcon },
   { to: '/ranking', label: '랭킹', icon: TrophyIcon },
   { to: '/profile', label: '프로필', icon: PersonIcon },
@@ -111,6 +112,31 @@ function PersonIcon({ active }) {
     >
       <circle cx="12" cy="8" r="4" />
       <path d="M20 21a8 8 0 00-16 0" />
+    </svg>
+  )
+}
+
+/** 이벤트(캘린더) 아이콘 */
+function EventIcon({ active }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={active ? "#fff" : "#94a3b8"}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-[22px] h-[22px]"
+    >
+      {/* calendar frame */}
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      {/* top header line */}
+      <path d="M3 10h18" />
+      {/* rings */}
+      <path d="M8 2v4M16 2v4" />
+      {/* event dot */}
+      <circle cx="12" cy="15" r="1.5" />
     </svg>
   )
 }
