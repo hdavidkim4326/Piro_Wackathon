@@ -1,19 +1,21 @@
-/**
- * 타일 미니게임 모달
- * ──────────────────
- * 게임 성공 시 즉시 onSuccess를 호출하여 점령 API를 트리거한다.
- * 서버 세션(submit/claim)은 백그라운드로 처리하여 체인 끊김을 방지한다.
- */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useGameStore from '../store/gameStore'
 import {
+  claimTileGame,
+  createBossGameSocket,
   fetchTileGameConfig,
   startTileGameSession,
   submitTileGameAction,
-  claimTileGame,
 } from '../lib/api'
 import { getGameComponentEntry } from '../games/registry'
+
+const WS_STATUS = {
+  IDLE: 'idle',
+  CONNECTING: 'connecting',
+  LIVE: 'live',
+  ERROR: 'error',
+  CLOSED: 'closed',
+}
 
 function getErrorMessage(error, fallback) {
   return error?.response?.data?.detail || error?.message || fallback
@@ -32,17 +34,22 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
   const [remainingClicks, setRemainingClicks] = useState(null)
   const [busy, setBusy] = useState(false)
   const [gameFinished, setGameFinished] = useState(false)
+  const [realtimeStatus, setRealtimeStatus] = useState(WS_STATUS.IDLE)
 
+  const wsRef = useRef(null)
+  const hitAckTimeoutRef = useRef(null)
   const onSuccessRef = useRef(onSuccess)
-  useEffect(() => { onSuccessRef.current = onSuccess }, [onSuccess])
+  useEffect(() => {
+    onSuccessRef.current = onSuccess
+  }, [onSuccess])
 
   const gameEntry = useMemo(
     () => getGameComponentEntry(config?.game_type),
     [config?.game_type]
   )
   const GameComponent = gameEntry?.mode === 'component' ? gameEntry?.component : null
+  const isBossGame = config?.game_type === 'boss_click'
 
-  // ─── 세션 부트스트랩 ─────────────────────────────────
   useEffect(() => {
     let cancelled = false
 
@@ -54,7 +61,11 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
       setMessage('')
       setConfig(null)
       setSessionId('')
+      setSessionStatus('READY')
+      setBossState(null)
+      setRemainingClicks(null)
       setGameFinished(false)
+      setRealtimeStatus(WS_STATUS.IDLE)
 
       try {
         const cfg = await fetchTileGameConfig(tile.grid_id)
@@ -74,136 +85,255 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
           setRemainingClicks(started.boss_state.click_limit_per_user ?? null)
         }
       } catch (e) {
-        if (!cancelled) setError(getErrorMessage(e, '게임 세션 초기화 실패'))
+        if (!cancelled) setError(getErrorMessage(e, 'Failed to initialize game session.'))
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
 
     bootstrap()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [tile?.grid_id, user?.nickname])
 
-  // ─── 서버에 결과 기록 (백그라운드, 점령과 무관) ───────
-  const recordToServer = useCallback(async (result) => {
-    if (!sessionId || !tile?.grid_id) return
-    try {
-      await submitTileGameAction(tile.grid_id, {
-        session_id: sessionId,
-        action_type: 'submit_result',
-        success: Boolean(result.success),
-        score: Number(result.score || 0),
-        game_level: Number(result.gameLevel || 1),
-        user_key: user?.nickname || 'anonymous',
-      })
-      await claimTileGame(tile.grid_id, sessionId)
-    } catch {
-      // 서버 기록 실패해도 점령 플로우에 영향 없음
-    }
-  }, [sessionId, tile?.grid_id, user?.nickname])
+  const recordToServer = useCallback(
+    async (result) => {
+      if (!sessionId || !tile?.grid_id) return
+      try {
+        await submitTileGameAction(tile.grid_id, {
+          session_id: sessionId,
+          action_type: 'submit_result',
+          success: Boolean(result.success),
+          score: Number(result.score || 0),
+          game_level: Number(result.gameLevel || 1),
+          user_key: user?.nickname || 'anonymous',
+        })
+        await claimTileGame(tile.grid_id, sessionId)
+      } catch {
+        // Keep local game flow even if telemetry fails.
+      }
+    },
+    [sessionId, tile?.grid_id, user?.nickname]
+  )
 
-  // ─── 기본 게임 결과 처리 ─────────────────────────────
-  const handleBasicResult = useCallback((result) => {
-    if (gameFinished) return
-    setGameFinished(true)
+  const handleBasicResult = useCallback(
+    (result) => {
+      if (gameFinished) return
+      setGameFinished(true)
 
-    if (result?.success) {
-      setMessage('🎉 성공! 점령 중...')
-      recordToServer(result)
+      if (result?.success) {
+        setMessage('Mission success. Occupying tile...')
+        recordToServer(result)
+        onSuccessRef.current?.({
+          success: true,
+          gameLevel: Number(result.gameLevel || config?.level || 1),
+          score: Number(result.score || 0),
+        })
+        return
+      }
+
+      setMessage('Mission failed. Try again.')
+    },
+    [config?.level, gameFinished, recordToServer]
+  )
+
+  const handleBossClaimAndOccupy = useCallback(
+    async (scoreFromServer) => {
+      if (gameFinished) return
+
+      setGameFinished(true)
+      try {
+        await claimTileGame(tile.grid_id, sessionId)
+      } catch {
+        // Keep local success path if claim API is temporarily unavailable.
+      }
+
+      setMessage('Boss defeated. Occupying tile...')
       onSuccessRef.current?.({
         success: true,
-        gameLevel: Number(result.gameLevel || config?.level || 1),
-        score: Number(result.score || 0),
+        gameLevel: Number(config?.level || 2),
+        score: Number(scoreFromServer || 0),
       })
-    } else {
-      setMessage('😢 아쉽게 실패했어요. 다시 도전해보세요!')
-    }
-  }, [config?.level, gameFinished, recordToServer])
+    },
+    [config?.level, gameFinished, sessionId, tile?.grid_id]
+  )
 
-  // ─── 보스 게임 히트 ──────────────────────────────────
   const handleBossHit = useCallback(async () => {
-    if (!tile?.grid_id || !sessionId || busy) return
+    if (!tile?.grid_id || !sessionId || busy || gameFinished) return
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      setMessage('Realtime connection is not ready. Please retry in a moment.')
+      return
+    }
 
     setBusy(true)
     setError('')
     setMessage('')
 
     try {
-      const action = await submitTileGameAction(tile.grid_id, {
-        session_id: sessionId,
-        action_type: 'boss_hit',
-        user_key: user?.nickname || 'anonymous',
-      })
-
-      setSessionStatus(action.session_status)
-      if (action.boss_state) setBossState(action.boss_state)
-      if (typeof action.remaining_clicks === 'number') {
-        setRemainingClicks(action.remaining_clicks)
-      }
-
-      if (!action.success) {
-        setMessage(action.message || '공격 실패')
-        return
-      }
-
-      if (action.can_claim) {
-        try { await claimTileGame(tile.grid_id, sessionId) } catch { /* ignore */ }
-        setMessage('🎉 보스 처치! 점령 중...')
-        onSuccessRef.current?.({
-          success: true,
-          gameLevel: Number(config?.level || 2),
-          score: Number(action.score || 0),
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'boss_hit',
+          session_id: sessionId,
+          user_key: user?.nickname || 'anonymous',
         })
-      } else {
-        setMessage('공격 성공! 계속 때려!')
+      )
+
+      if (hitAckTimeoutRef.current) {
+        window.clearTimeout(hitAckTimeoutRef.current)
       }
+      hitAckTimeoutRef.current = window.setTimeout(() => {
+        setBusy(false)
+        setMessage('Attack timeout. Please try again.')
+      }, 6000)
     } catch (e) {
-      setError(getErrorMessage(e, '공격 처리 실패'))
-    } finally {
       setBusy(false)
+      setError(getErrorMessage(e, 'Failed to send boss hit via realtime channel.'))
     }
-  }, [busy, config?.level, sessionId, tile?.grid_id, user?.nickname])
+  }, [busy, gameFinished, sessionId, tile?.grid_id, user?.nickname])
+
+  useEffect(() => {
+    if (!isBossGame || !tile?.grid_id) return
+
+    let active = true
+    let pingTimer = null
+
+    try {
+      const ws = createBossGameSocket(tile.grid_id)
+      wsRef.current = ws
+      setRealtimeStatus(WS_STATUS.CONNECTING)
+
+      ws.onopen = () => {
+        if (!active) return
+        setRealtimeStatus(WS_STATUS.LIVE)
+        ws.send(JSON.stringify({ type: 'sync' }))
+      }
+
+      ws.onmessage = (event) => {
+        if (!active) return
+        try {
+          const payload = JSON.parse(event.data)
+
+          if (payload?.type === 'boss_state') {
+            if (payload?.boss_state) setBossState(payload.boss_state)
+            return
+          }
+
+          if (payload?.type === 'pong') return
+
+          if (payload?.type !== 'boss_hit_ack') return
+
+          if (hitAckTimeoutRef.current) {
+            window.clearTimeout(hitAckTimeoutRef.current)
+            hitAckTimeoutRef.current = null
+          }
+
+          setBusy(false)
+          if (payload?.session_status) setSessionStatus(payload.session_status)
+          if (payload?.boss_state) setBossState(payload.boss_state)
+          if (typeof payload?.remaining_clicks === 'number') {
+            setRemainingClicks(payload.remaining_clicks)
+          }
+
+          if (!payload?.success) {
+            setMessage(payload?.message || 'Attack failed.')
+            return
+          }
+
+          if (!payload?.can_claim) {
+            setMessage('Hit landed. Keep attacking.')
+            return
+          }
+
+          void handleBossClaimAndOccupy(payload?.score)
+        } catch {
+          // Ignore malformed websocket payloads.
+        }
+      }
+
+      ws.onerror = () => {
+        if (!active) return
+        setRealtimeStatus(WS_STATUS.ERROR)
+      }
+
+      ws.onclose = () => {
+        if (!active) return
+        setRealtimeStatus((prev) =>
+          prev === WS_STATUS.ERROR ? WS_STATUS.ERROR : WS_STATUS.CLOSED
+        )
+      }
+
+      pingTimer = window.setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }))
+        }
+      }, 20000)
+    } catch {
+      setRealtimeStatus(WS_STATUS.ERROR)
+    }
+
+    return () => {
+      active = false
+      if (pingTimer) window.clearInterval(pingTimer)
+      if (hitAckTimeoutRef.current) {
+        window.clearTimeout(hitAckTimeoutRef.current)
+        hitAckTimeoutRef.current = null
+      }
+      if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) {
+        wsRef.current.close()
+      }
+      wsRef.current = null
+    }
+  }, [handleBossClaimAndOccupy, isBossGame, tile?.grid_id])
+
+  const modalTone = isBossGame
+    ? {
+        body: 'bg-slate-950 text-slate-100 border border-rose-300/20',
+        header: 'border-b border-rose-300/20 bg-gradient-to-r from-rose-950 to-slate-950',
+        close: 'bg-white/10 text-slate-100 hover:bg-white/20',
+        loading: 'text-slate-300',
+        message: 'border-t border-rose-300/20 bg-rose-950/30 text-rose-100',
+      }
+    : {
+        body: 'bg-white text-slate-900 border border-slate-200',
+        header: 'border-b border-slate-200 bg-white',
+        close: 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+        loading: 'text-slate-500',
+        message: 'border-t border-slate-200 bg-slate-50 text-slate-700',
+      }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4 backdrop-blur-[2px]">
+      <div
+        className={`w-full max-w-md overflow-hidden rounded-3xl shadow-2xl ${modalTone.body}`}
+      >
+        <div className={`flex items-center justify-between px-4 py-3 ${modalTone.header}`}>
           <div>
-            <p className="text-sm font-bold text-slate-800">
-              {gameEntry?.title || '미니게임'}
-            </p>
+            <p className="text-xs font-black tracking-[0.18em] text-indigo-300">MISSION</p>
+            <p className="text-sm font-bold">{gameEntry?.title || 'Mini Game'}</p>
             <p className="text-[11px] text-slate-400">{tile?.grid_id}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 active:bg-slate-200"
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${modalTone.close}`}
           >
-            닫기
+            Close
           </button>
         </div>
 
-        {/* 로딩 */}
         {loading && (
-          <div className="flex items-center gap-2 p-5 text-sm text-slate-500">
+          <div className={`flex items-center gap-2 p-5 text-sm ${modalTone.loading}`}>
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-            게임 준비 중...
+            Preparing game...
           </div>
         )}
 
-        {/* 에러 */}
-        {!loading && error && (
-          <div className="p-5 text-sm text-rose-600">{error}</div>
-        )}
+        {!loading && error && <div className="p-5 text-sm text-rose-400">{error}</div>}
 
-        {/* 게임 컴포넌트 없음 */}
         {!loading && !error && !GameComponent && (
-          <div className="p-5 text-sm text-rose-600">
-            이 타일의 게임을 불러올 수 없습니다.
-          </div>
+          <div className="p-5 text-sm text-rose-400">No game component mapped.</div>
         )}
 
-        {/* 게임 컴포넌트 렌더링 */}
         {!loading && !error && GameComponent && (
           <GameComponent
             busy={busy}
@@ -211,17 +341,13 @@ export default function TileGameModal({ tile, onClose, onSuccess }) {
             bossState={bossState}
             remainingClicks={remainingClicks}
             sessionStatus={sessionStatus}
+            realtimeStatus={realtimeStatus}
             onSubmitResult={handleBasicResult}
             onBossHit={handleBossHit}
           />
         )}
 
-        {/* 결과 메시지 */}
-        {message && (
-          <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-            {message}
-          </div>
-        )}
+        {message && <div className={`px-4 py-3 text-sm font-medium ${modalTone.message}`}>{message}</div>}
       </div>
     </div>
   )
