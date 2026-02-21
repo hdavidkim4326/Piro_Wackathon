@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.tiles import router as tiles_router
 from api.ranking import router as ranking_router
+from api.users import router as users_router
 from database import init_db
 
 
@@ -55,6 +56,7 @@ app.add_middleware(
 # ─── 라우터 등록 ─────────────────────────────────────────────
 app.include_router(tiles_router, prefix="/api", tags=["tiles"])
 app.include_router(ranking_router, prefix="/api", tags=["ranking"])
+app.include_router(users_router, prefix="/api", tags=["users"])
 
 
 # ─── 헬스체크 ────────────────────────────────────────────────
