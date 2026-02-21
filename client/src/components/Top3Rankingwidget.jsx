@@ -14,7 +14,7 @@ export default function Top3RankingWidget() {
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.25 }}
-      className="absolute right-4 top-32 z-30 w-[190px] rounded-2xl border border-white/60 bg-white/90 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
+      className="absolute right-4 top-32 z-30 w-[190px] rounded-2xl border border-white/60 bg-white/50 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
     >
       <p className="mb-2 text-xs font-extrabold text-slate-700">TOP 3 랭킹</p>
 

@@ -45,53 +45,12 @@ export default function Home() {
     <div className="relative h-screen w-full overflow-hidden bg-slate-100">
       <MapView center={center} />
 
-      <div className="absolute left-4 right-4 top-4 z-30 flex flex-col gap-3">
+      <div className="absolute left-4 right-4 top-20 z-30 flex flex-col gap-3">
         <MapSearchBar
           onPickPlace={(p) => {
             setMapCenter({ lat: p.lat, lng: p.lng })
           }}
         />
-
-        <MotionDiv
-          initial={{ y: -16, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', damping: 22, stiffness: 260 }}
-          className="rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold tracking-tight text-slate-800">
-                {user?.nickname || '땅콩'}
-              </p>
-              <p className="truncate text-[11px] font-medium text-slate-400">
-                {user?.university ||
-                  (loading ? '위치 수신 중...' : error ? 'GPS 오류' : 'GPS 연결됨')}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {demoMode && (
-                <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                  DEMO
-                </span>
-              )}
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  demoMode
-                    ? 'bg-rose-400'
-                    : loading
-                      ? 'animate-pulse bg-amber-400'
-                      : error
-                        ? 'bg-red-400'
-                        : 'bg-emerald-400'
-                }`}
-              />
-              <span className="text-[11px] font-semibold text-slate-500">
-                {currentGridId || 'grid 계산 대기'}
-              </span>
-            </div>
-          </div>
-        </MotionDiv>
       </div>
 
       <Top3RankingWidget />
