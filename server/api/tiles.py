@@ -23,8 +23,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from core.grid import get_viewport_grid_ids, grid_polygon
+<<<<<<< HEAD
 from core.mission import ensure_default_mission, get_default_mission
 from core.special_tiles import classify_special_tile, get_special_zone_info
+=======
+from core.special_tiles import (
+    classify_special_tile,
+    get_special_centers_in_bounds,
+    get_special_zone_info,
+)
+>>>>>>> cf39f88a3dff96aa5e5e8d9d5279cd53831cb650
 from database import get_db
 from models import (
     OccupationCategory,
@@ -35,7 +43,7 @@ from models import (
     TerritoryStatusEnum,
     UserOrganization,
 )
-from schemas import TileRead, TileOccupyRequest
+from schemas import SpecialCenterRead, TileRead, TileOccupyRequest
 
 router = APIRouter()
 
@@ -203,6 +211,22 @@ def get_tiles(
             )
 
     return response
+
+
+@router.get("/special-centers", response_model=list[SpecialCenterRead])
+def get_special_centers(
+    min_lat: float = Query(..., description="酉고룷???⑥そ 寃쎄퀎 ?꾨룄"),
+    max_lat: float = Query(..., description="酉고룷??遺곸そ 寃쎄퀎 ?꾨룄"),
+    min_lng: float = Query(..., description="酉고룷???쒖そ 寃쎄퀎 寃쎈룄"),
+    max_lng: float = Query(..., description="酉고룷???숈そ 寃쎄퀎 寃쎈룄"),
+):
+    centers = get_special_centers_in_bounds(
+        min_lat=min_lat,
+        max_lat=max_lat,
+        min_lng=min_lng,
+        max_lng=max_lng,
+    )
+    return [SpecialCenterRead(**center) for center in centers]
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
