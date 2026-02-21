@@ -51,9 +51,7 @@ export default function TileInfoPanel() {
                   ? `${selectedTile.owner_univ} territory`
                   : 'Unoccupied tile'}
               </h3>
-              <p className="mt-1 text-xs text-text-secondary">
-                {selectedTile.grid_id}
-              </p>
+              <p className="mt-1 text-xs text-text-secondary">{selectedTile.grid_id}</p>
             </div>
 
             <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-semibold text-primary">
@@ -61,16 +59,32 @@ export default function TileInfoPanel() {
             </span>
           </div>
 
+          {selectedTile.is_special && (
+            <div className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+              Special Tile: {selectedTile.special_type || '3x3'}
+            </div>
+          )}
+
+          {!selectedTile.is_special && selectedTile.in_special_zone && (
+            <div className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+              Special Zone ({selectedTile.special_zone_type || '3x3'}) - Center:{' '}
+              {selectedTile.special_center_grid_id || '-'}
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button
               onClick={() => setGameOpen(true)}
               disabled={isPending}
               className="flex-1 rounded-xl bg-primary px-4 py-3 font-bold text-white disabled:opacity-50"
             >
-              {isPending ? 'Occupying...' : '땅따먹기 시작'}
+              {isPending ? 'Occupying...' : 'Start Mission'}
             </button>
             <button
-              onClick={() => setSelectedTile(null)}
+              onClick={() => {
+                setGameOpen(false)
+                setSelectedTile(null)
+              }}
               className="rounded-xl bg-surface px-4 py-3 font-bold text-text-secondary"
             >
               Close

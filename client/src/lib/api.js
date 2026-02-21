@@ -97,4 +97,51 @@ export async function submitSignup({ email, nickname, university }) {
   return response.data
 }
 
+/**
+ * Fetch game configuration assigned to a tile.
+ *
+ * @param {string} gridId
+ */
+export async function fetchTileGameConfig(gridId) {
+  const response = await api.get(`/games/${gridId}`)
+  return response.data
+}
+
+/**
+ * Start a game session for a tile.
+ *
+ * @param {string} gridId
+ * @param {{userKey?: string}} payload
+ */
+export async function startTileGameSession(gridId, payload = {}) {
+  const response = await api.post(`/games/${gridId}/start`, {
+    user_key: payload.userKey,
+  })
+  return response.data
+}
+
+/**
+ * Submit game action (basic result or boss hit).
+ *
+ * @param {string} gridId
+ * @param {object} payload
+ */
+export async function submitTileGameAction(gridId, payload) {
+  const response = await api.post(`/games/${gridId}/action`, payload)
+  return response.data
+}
+
+/**
+ * Claim permission after successful game session.
+ *
+ * @param {string} gridId
+ * @param {string} sessionId
+ */
+export async function claimTileGame(gridId, sessionId) {
+  const response = await api.post(`/games/${gridId}/claim`, {
+    session_id: sessionId,
+  })
+  return response.data
+}
+
 export default api
