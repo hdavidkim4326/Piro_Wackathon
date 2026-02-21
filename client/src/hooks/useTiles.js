@@ -9,11 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-<<<<<<< HEAD
-import { fetchMyStats, fetchTiles, occupyTile, fetchRanking } from '../lib/api'
-=======
 import { fetchTiles, occupyTile, fetchRanking, fetchSpecialCenters } from '../lib/api'
->>>>>>> cf39f88a3dff96aa5e5e8d9d5279cd53831cb650
 import useGameStore from '../store/gameStore'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
