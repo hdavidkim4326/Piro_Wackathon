@@ -9,7 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTiles, occupyTile, fetchRanking } from '../lib/api'
+import { fetchTiles, occupyTile, fetchRanking, fetchSpecialCenters } from '../lib/api'
 import useGameStore from '../store/gameStore'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -31,6 +31,25 @@ export function useTiles() {
     enabled: !!mapBounds,
     staleTime: 5_000,
     refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+export function useSpecialCenters() {
+  const mapBounds = useGameStore((state) => state.mapBounds)
+
+  return useQuery({
+    queryKey: ['special-centers', mapBounds],
+    queryFn: () =>
+      fetchSpecialCenters({
+        minLat: mapBounds.minLat,
+        maxLat: mapBounds.maxLat,
+        minLng: mapBounds.minLng,
+        maxLng: mapBounds.maxLng,
+      }),
+    enabled: !!mapBounds,
+    staleTime: 15_000,
+    refetchInterval: 15_000,
     refetchOnWindowFocus: true,
   })
 }
