@@ -1,14 +1,15 @@
 /**
- * 홈(지도) 페이지 — 플로팅 HUD 레이아웃
- * ─────────────────────────────────────
- * 지도가 화면 전체를 덮고, 그 위에 글래스모피즘 HUD가 떠 있는 구조.
+ * 홈(지도) 페이지 — 플로팅 HUD 레이아웃 (병합 완료)
+ * ──────────────────────────────────────────────────
+ * [팀원] MapView가 전체 화면(absolute inset-0)으로 깔림
+ * [내 디자인] 글래스모피즘 HUD가 z-30~z-60 레이어로 둥둥 떠 있음
  *
- * [구성 요소]
- *  1. 최상단 플로팅 정보 바 (내 정보 + 1위 대학)
- *  2. 전체화면 카카오맵
- *  3. 타일 로딩 인디케이터 (알약 형태)
- *  4. 우하단 GPS 복귀 버튼
- *  5. 바텀 시트 (TileInfoPanel)
+ * [레이어 구조]
+ *   z-0   MapView (카카오맵 + 그리드 폴리곤)
+ *   z-20  타일 카운터 뱃지 (MapView 내부)
+ *   z-30  상단 플로팅 정보 바, GPS 버튼
+ *   z-55  TileInfoPanel 딤드 오버레이
+ *   z-60  TileInfoPanel 바텀 시트, BottomNav
  */
 
 import { motion } from 'framer-motion'
@@ -35,11 +36,7 @@ export default function Home() {
   const center = location || DEFAULT_CENTER
   const topUniv = ranking?.[0]
 
-  /**
-   * GPS 버튼 클릭 → 지도를 현재 위치로 부드럽게 이동
-   * (카카오맵 panTo는 MapView에서 ref로 처리해야 하므로
-   *  여기선 center를 강제 갱신하는 방식으로 대체)
-   */
+  /** GPS 버튼 → 현재 위치로 지도 센터 강제 갱신 */
   const handleGpsClick = () => {
     if (location) {
       useGameStore.getState().setLocation({ ...location })
@@ -49,10 +46,10 @@ export default function Home() {
   return (
     <div className="relative h-screen w-full overflow-hidden bg-slate-100">
 
-      {/* ━━━ 전체 화면 지도 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ z-0: 전체 화면 지도 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <MapView center={center} />
 
-      {/* ━━━ 상단 플로팅 정보 바 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ z-30: 상단 플로팅 정보 바 ━━━━━━━━━━━━━━━━━━━━━━━ */}
       <motion.header
         initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -62,10 +59,11 @@ export default function Home() {
         <div className="flex items-center justify-between">
           {/* 왼쪽: 내 정보 */}
           <div className="flex items-center gap-3 min-w-0">
-            {/* GPS 상태 도트 */}
             <div className="relative flex-shrink-0">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg font-black ${
-                user ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/30' : 'bg-slate-100 text-slate-400'
+                user
+                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/30'
+                  : 'bg-slate-100 text-slate-400'
               }`}>
                 {user ? user.nickname.charAt(0).toUpperCase() : '?'}
               </div>
@@ -107,7 +105,7 @@ export default function Home() {
         </div>
       </motion.header>
 
-      {/* ━━━ 타일 로딩 인디케이터 (지도 상단 중앙) ━━━━━━━━━━━━ */}
+      {/* ━━━ z-20: 타일 로딩 인디케이터 ━━━━━━━━━━━━━━━━━━━━━━ */}
       {tilesLoading && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -122,7 +120,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* ━━━ 우하단 GPS 복귀 버튼 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ z-30: 우하단 GPS 복귀 버튼 ━━━━━━━━━━━━━━━━━━━━━ */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -147,7 +145,7 @@ export default function Home() {
         </svg>
       </motion.button>
 
-      {/* ━━━ 타일 정보 바텀 시트 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ z-55~60: 타일 정보 바텀 시트 ━━━━━━━━━━━━━━━━━━━ */}
       <TileInfoPanel />
     </div>
   )

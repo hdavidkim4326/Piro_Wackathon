@@ -39,6 +39,8 @@ app = FastAPI(
     description="대학교 진영 지도 점령 게임 백엔드 API",
     version="0.2.0",
     lifespan=lifespan,
+    docs_url="/api/docs", 
+    openapi_url="/api/openapi.json"
 )
 
 # ─── CORS 미들웨어 ───────────────────────────────────────────

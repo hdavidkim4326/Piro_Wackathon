@@ -1,33 +1,31 @@
 /**
- * 타일 정보 바텀 시트 컴포넌트
- * ──────────────────────────
- * 토스 앱 스타일의 바텀 시트.
- * 사용자가 지도에서 타일을 탭하면 하단에서 스프링 애니메이션으로 올라온다.
- * 글래스모피즘 배경 위에 대학교 뱃지, 레벨, 점령 버튼을 배치한다.
+ * 타일 정보 바텀 시트 컴포넌트 (병합 완료)
+ * ──────────────────────────────────────
+ * [내 디자인] 토스 앱 스타일 바텀 시트 — 글래스모피즘, 대학별 그라데이션 버튼,
+ *            스프링 애니메이션, 딤드 오버레이
+ * [상태 연결] Zustand selectedTile ↔ MapView의 setSelectedTile로 연결됨
+ *            useOccupyTile 뮤테이션으로 점령 API 호출
  */
 
 import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../store/gameStore'
 import { useOccupyTile } from '../hooks/useTiles'
 
-// ─── 대학교별 그라데이션·글로우 매핑 ────────────────────────
+// ─── 대학교별 그라데이션 · 글로우 · 이모지 매핑 ─────────────
 const UNIV_STYLES = {
   서울대학교: {
     gradient: 'from-blue-500 to-indigo-600',
     glow: 'shadow-[0_0_24px_rgba(59,130,246,0.45)]',
-    badge: 'bg-blue-50 text-blue-600 border-blue-200',
     emoji: '🔵',
   },
   연세대학교: {
     gradient: 'from-sky-400 to-blue-600',
     glow: 'shadow-[0_0_24px_rgba(56,189,248,0.45)]',
-    badge: 'bg-sky-50 text-sky-600 border-sky-200',
     emoji: '🦅',
   },
   고려대학교: {
     gradient: 'from-red-500 to-rose-600',
     glow: 'shadow-[0_0_24px_rgba(239,68,68,0.45)]',
-    badge: 'bg-red-50 text-red-600 border-red-200',
     emoji: '🐯',
   },
 }
@@ -35,21 +33,18 @@ const UNIV_STYLES = {
 const DEFAULT_STYLE = {
   gradient: 'from-indigo-500 to-purple-600',
   glow: 'shadow-[0_0_24px_rgba(99,102,241,0.4)]',
-  badge: 'bg-indigo-50 text-indigo-600 border-indigo-200',
   emoji: '⚡',
 }
 
-/**
- * 대학교 이름에 맞는 스타일 객체를 반환한다.
- * @param {string|null} univ
- */
+/** @param {string|null} univ */
 function getStyle(univ) {
   if (!univ) return DEFAULT_STYLE
   return UNIV_STYLES[univ] || DEFAULT_STYLE
 }
 
 /**
- * 토스 스타일 바텀 시트 — 선택된 타일의 정보와 점령 액션을 제공한다.
+ * 토스 스타일 바텀 시트.
+ * MapView에서 폴리곤 클릭 → setSelectedTile → 이 패널이 열린다.
  */
 export default function TileInfoPanel() {
   const selectedTile = useGameStore((s) => s.selectedTile)
