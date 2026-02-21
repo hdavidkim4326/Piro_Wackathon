@@ -363,10 +363,11 @@ export default function MapView({ center }) {
     const zoomLevel = mapRef.current.getLevel?.() ?? 3
     const only5x5 = zoomLevel >= ONLY_5X5_PIN_LEVEL
     setShowOnly5x5Pins(only5x5)
-    if (!specialCenters || specialCenters.length === 0) return
+    const centers = Array.isArray(specialCenters) ? specialCenters : []
+    if (centers.length === 0) return
     const visibleCenters = only5x5
-      ? specialCenters.filter((center) => center?.special_type === '5x5')
-      : specialCenters
+      ? centers.filter((center) => center?.special_type === '5x5')
+      : centers
 
     const tileMap = new Map()
     if (serverTiles && serverTiles.length > 0) {
