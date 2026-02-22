@@ -188,10 +188,10 @@ export default function TileInfoPanel() {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-          className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[420px] z-[55] rounded-t-[36px] bg-[#fff9f0] pb-[max(env(safe-area-inset-bottom),28px)]"
+          className="fixed left-1/2 -translate-x-1/2 bottom-[110px] w-[calc(100%-32px)] max-w-[420px] z-[55] rounded-[36px] bg-[#fff9f0] pb-4"
           style={{
             maxHeight: '70dvh',
-            boxShadow: '0 -8px 32px rgba(235,184,101,0.25), 0 0 0 2px rgba(255,232,204,1)',
+            boxShadow: '0 12px 40px rgba(235,184,101,0.35), 0 0 0 2px rgba(255,232,204,1)',
             fontFamily: "'Gowun Dodum', sans-serif"
           }}
         >
