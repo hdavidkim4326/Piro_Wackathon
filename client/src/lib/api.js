@@ -6,8 +6,21 @@
 
 import axios from 'axios'
 
+function resolveApiBaseUrl(rawValue) {
+  const trimmed = String(rawValue || '').trim()
+  const fallback = import.meta.env.DEV ? 'http://localhost:8000/api' : '/api'
+
+  if (!trimmed) return fallback
+
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, '')
+  if (withoutTrailingSlash.endsWith('/api')) return withoutTrailingSlash
+  return `${withoutTrailingSlash}/api`
+}
+
+const apiBaseUrl = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
+
 const api = axios.create({
-  baseURL: 'https://d2hixyxntmembw.cloudfront.net/api', 
+  baseURL: apiBaseUrl,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
 })

@@ -2,7 +2,7 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main, deploy ]
+    branches: [main, deploy]
   workflow_dispatch:
 
 concurrency:
@@ -17,7 +17,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1) 프론트엔드 빌드 및 S3 배포
+      - name: Validate required frontend secrets
+        run: |
+          if [ -z "${{ secrets.VITE_API_BASE_URL }}" ]; then
+            echo "Missing secret: VITE_API_BASE_URL"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VITE_KAKAO_MAP_KEY }}" ]; then
+            echo "Missing secret: VITE_KAKAO_MAP_KEY"
+            exit 1
+          fi
+
+      - name: Create frontend production env
+        run: |
+          cat > client/.env.production <<EOF
+          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          VITE_KAKAO_MAP_KEY=${{ secrets.VITE_KAKAO_MAP_KEY }}
+          EOF
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,8 +48,7 @@ jobs:
 
       - name: Build client
         working-directory: client
-        run: |
-          npm run build
+        run: npm run build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -41,15 +57,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
-      - name: Deploy to S3
+      - name: Deploy static files to S3
         run: aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
-      - name: CloudFront Invalidation
+      - name: Invalidate CloudFront cache
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
 
-      # 2) EC2 백엔드 배포
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+      - name: Deploy backend on EC2
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
@@ -60,4 +75,3 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             docker compose up -d --build backend
-#           # ✅ 프론트엔드는 S3에서 바로 배포하므로 EC2에서는 백엔드만 재시작, docker compose 명령어도 backend 서비스만 타겟팅
