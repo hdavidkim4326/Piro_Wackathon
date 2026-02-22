@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker, Session
 # - docker-compose/.env 쓰는 구조면 이거 켜두는 게 편함
 load_dotenv(".env")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://campusturf:campusturf1234@3.39.190.100:5433/campusturf_db")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set. Check your .env or environment variables.")
 
