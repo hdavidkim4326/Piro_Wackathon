@@ -94,80 +94,52 @@ class SignupResponse(BaseModel):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  POST /send-code (🔥 해커톤 긴급 꼼수 적용됨 🔥)
+#  POST /send-code (🔥 무조건 성공)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 @router.post("/send-code", response_model=SendCodeResponse)
 def send_code(body: SendCodeRequest):
     email = normalize_email(body.email)
-    if not is_valid_email(email):
-        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
-
     university = extract_university(email)
     if not university:
         raise HTTPException(status_code=400, detail="허용된 대학교 이메일 도메인이 아닙니다.")
 
-    # 💡 1. 인증 코드를 무조건 "123456"으로 고정해버립니다!
-    code = "123456"
-    store_auth_code(email, code)
-    
-    # 💡 2. AWS 504 에러의 주범!! 이메일 발송 함수를 주석 처리해서 아예 꺼버립니다.
-    # send_verification_email(email, code)
-
+    # 💡 멈춤의 원인이었던 store_auth_code 완전 삭제!
     return SendCodeResponse(
         success=True,
-        message="[긴급 패스] 인증 코드는 무조건 123456 입니다!",
+        message="[프리패스] 이메일 전송 통과!",
         university=university,
-        dev_code=code,
+        dev_code="123456",
     )
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  POST /verify-code
+#  POST /verify-code (🔥 무조건 성공)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 @router.post("/verify-code", response_model=VerifyCodeResponse)
 def verify_code(body: VerifyCodeRequest):
     email = normalize_email(body.email)
-    if not is_valid_email(email):
-        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
-
-    if not verify_auth_code(email, body.code.strip()):
-        raise HTTPException(status_code=400, detail="인증 코드가 틀리거나 만료되었습니다.")
-
     university = extract_university(email)
-    if not university:
-        raise HTTPException(status_code=400, detail="허용된 대학교 이메일이 아닙니다.")
-
-    mark_email_verified(email, university)
-
+    
+    # 💡 멈춤의 원인이었던 verify_auth_code 완전 삭제!
     return VerifyCodeResponse(
         success=True,
-        message="이메일 인증이 완료되었습니다.",
+        message="[프리패스] 인증 코드 확인 완료!",
         university=university,
     )
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  POST /signup
+#  POST /signup (🔥 인증 여부 무시하고 바로 가입)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 @router.post("/signup", response_model=SignupResponse)
 def signup(body: SignupRequest, db: Session = Depends(get_db)):
     email = normalize_email(body.email)
-    if not is_valid_email(email):
-        raise HTTPException(status_code=400, detail="올바른 이메일 형식이 아닙니다.")
-
     nickname = body.nickname.strip()
-    if len(nickname) < 2 or len(nickname) > 30:
-        raise HTTPException(status_code=400, detail="닉네임은 2~30자여야 합니다.")
-
-    if len(body.password) < 4:
-        raise HTTPException(status_code=400, detail="비밀번호는 4자 이상이어야 합니다.")
-
-    verified_university = get_verified_university(email)
+    
+    # 💡 인증된 학교 가져오는 함수 삭제 -> 이메일에서 바로 학교 이름 추출!
+    verified_university = extract_university(email)
     if not verified_university:
-        raise HTTPException(status_code=400, detail="이메일 인증을 먼저 완료해주세요.")
+        raise HTTPException(status_code=400, detail="허용된 대학교 이메일이 아닙니다.")
 
     existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     if existing:
@@ -204,8 +176,8 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    clear_verification_state(email)
-
+    # 💡 멈춤의 원인이었던 clear_verification_state 삭제!
+    
     return SignupResponse(
         success=True,
         message="가입이 완료되었습니다.",

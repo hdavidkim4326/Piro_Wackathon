@@ -1,22 +1,22 @@
 export default function Ranking() {
   // 원래 코드는 잠시 주석 처리!
-  // const { data: rankings, isLoading, isError } = useRanking()
+  const { data: rankings, isLoading, isError } = useRanking()
 
   // 🥜 임의로 만든 귀여운 더미 데이터 (테스트용)
-  const rankings = [
-    { rank: 1, university: "땅콩대학교", tile_count: 152 },
-    { rank: 2, university: "아몬드대학교", tile_count: 130 },
-    { rank: 3, university: "호두대학교", tile_count: 115 },
-    { rank: 4, university: "피스타치오대", tile_count: 98 },
-    { rank: 5, university: "마카다미아대", tile_count: 85 },
-    { rank: 6, university: "캐슈넛대학교", tile_count: 72 },
-    { rank: 7, university: "해바라기씨대", tile_count: 60 },
-    { rank: 8, university: "잣대학교", tile_count: 45 },
-    { rank: 9, university: "호박씨대학교", tile_count: 30 },
-    { rank: 10, university: "헤이즐넛대학", tile_count: 12 },
-  ];
-  const isLoading = false;
-  const isError = false;
+  // const rankings = [
+  //   { rank: 1, university: "땅콩대학교", tile_count: 152 },
+  //   { rank: 2, university: "아몬드대학교", tile_count: 130 },
+  //   { rank: 3, university: "호두대학교", tile_count: 115 },
+  //   { rank: 4, university: "피스타치오대", tile_count: 98 },
+  //   { rank: 5, university: "마카다미아대", tile_count: 85 },
+  //   { rank: 6, university: "캐슈넛대학교", tile_count: 72 },
+  //   { rank: 7, university: "해바라기씨대", tile_count: 60 },
+  //   { rank: 8, university: "잣대학교", tile_count: 45 },
+  //   { rank: 9, university: "호박씨대학교", tile_count: 30 },
+  //   { rank: 10, university: "헤이즐넛대학", tile_count: 12 },
+  // ];
+  // const isLoading = false;
+  // const isError = false;
   //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
   const first = rankings?.find((r) => r.rank === 1)
