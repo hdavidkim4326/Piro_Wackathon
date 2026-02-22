@@ -12,6 +12,7 @@ services:
     container_name: campusturf_backend
     restart: unless-stopped
     ports:
+      - "80:8000"
       - "8000:8000"
     # ✅ DB가 없으므로 depends_on 삭제, env만 읽어서 AWS로 바로 돌진!
     env_file:
