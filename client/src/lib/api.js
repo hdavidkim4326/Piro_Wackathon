@@ -32,7 +32,7 @@ export async function fetchSpecialCenters({ minLat, maxLat, minLng, maxLng }) {
 export async function occupyTile({ gridId, university, level = 1, userId = null }) {
   // 로그인한 유저의 ID가 있으면 HTTP 헤더(X-User-Id)에 실어서 보냅니다.
   const headers = userId ? { 'X-User-Id': String(userId) } : {}
-  
+
   const res = await api.post('/occupy', { grid_id: gridId, university, level }, { headers })
   return res.data // (잘렸던 return 구문 복구)
 }
