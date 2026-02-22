@@ -94,7 +94,7 @@ class SignupResponse(BaseModel):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  POST /send-code
+#  POST /send-code (🔥 해커톤 긴급 꼼수 적용됨 🔥)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 @router.post("/send-code", response_model=SendCodeResponse)
@@ -107,15 +107,18 @@ def send_code(body: SendCodeRequest):
     if not university:
         raise HTTPException(status_code=400, detail="허용된 대학교 이메일 도메인이 아닙니다.")
 
-    code = generate_verification_code()
+    # 💡 1. 인증 코드를 무조건 "123456"으로 고정해버립니다!
+    code = "123456"
     store_auth_code(email, code)
-    send_verification_email(email, code)
+    
+    # 💡 2. AWS 504 에러의 주범!! 이메일 발송 함수를 주석 처리해서 아예 꺼버립니다.
+    # send_verification_email(email, code)
 
     return SendCodeResponse(
         success=True,
-        message="인증 코드가 발송되었습니다.",
+        message="[긴급 패스] 인증 코드는 무조건 123456 입니다!",
         university=university,
-        dev_code=code if settings.EMAIL_VERIFICATION_DEV_MODE else None,
+        dev_code=code,
     )
 
 
