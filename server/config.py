@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     # Domain format: "domain:University,domain2:University2"
     ALLOWED_UNIVERSITY_DOMAINS: str = (
-        "snu.ac.kr:서울대학교,yonsei.ac.kr:연세대학교,korea.ac.kr:고려대학교"
+        "snu.ac.kr:서울대학교,yonsei.ac.kr:연세대학교,korea.ac.kr:고려대학교", "sogang.ac.kr:서강대학교"
     )
     EMAIL_CODE_TTL_SECONDS: int = 300
     EMAIL_VERIFIED_TTL_SECONDS: int = 600

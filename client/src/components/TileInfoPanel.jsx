@@ -59,7 +59,8 @@ const UNIV_DOT_COLORS = {
   '연세대학교': '#0ea5e9',
   '고려대학교': '#ef4444',
   '한양대학교': '#a855f7',
-  '숙명여자대학교':'#0343aa'
+  '숙명여자대학교':'#e46739',
+  '서강대학교':'#B60005'
 }
 
 const TAUNTS_EMPTY = [K.tauntEmpty1, K.tauntEmpty2, K.tauntEmpty3, K.tauntEmpty4]
