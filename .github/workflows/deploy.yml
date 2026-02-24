@@ -74,11 +74,11 @@ jobs:
             cd ~/Piro_Wackathon
             git fetch origin main
             git reset --hard origin/main
-            docker compose up -d --build postgres backend
+            docker compose up -d --build db backend
             sleep 5
             if ! curl -fsS http://localhost:8000/health; then
               echo "Backend health check failed"
               docker compose ps
-              docker compose logs --tail=200 backend postgres
+              docker compose logs --tail=200 backend db
               exit 1
             fi

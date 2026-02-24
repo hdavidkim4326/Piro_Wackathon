@@ -1,5 +1,5 @@
 services:
-  postgres:
+  db:
     image: postgres:15-alpine
     container_name: campusturf_postgres
     restart: unless-stopped
@@ -31,7 +31,7 @@ services:
     volumes:
       - ./server:/app
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
 
   frontend:
