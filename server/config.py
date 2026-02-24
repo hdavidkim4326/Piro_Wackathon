@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
     SMTP_SENDER: str | None = None
+    SMTP_TIMEOUT_SECONDS: int = 5
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

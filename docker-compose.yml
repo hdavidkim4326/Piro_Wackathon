@@ -1,10 +1,22 @@
-# ============================================================
-# Campus Turf War - Docker Compose 설정 (원격 DB 연결 모드)
-# 로컬 개발 환경에서 백엔드와 프론트엔드만 가볍게 실행
-# ============================================================
-
 services:
-  # ─── FastAPI 백엔드 서버 ───────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: campusturf_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: campusturf
+      POSTGRES_PASSWORD: campusturf1234
+      POSTGRES_DB: campusturf_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusturf -d campusturf_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./server
@@ -14,13 +26,14 @@ services:
     ports:
       - "80:8000"
       - "8000:8000"
-    # ✅ DB가 없으므로 depends_on 삭제, env만 읽어서 AWS로 바로 돌진!
     env_file:
       - ./server/.env
     volumes:
       - ./server:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-  # ─── React 프론트엔드 (Vite 개발 서버) ────────────────────
   frontend:
     build:
       context: ./client
@@ -37,4 +50,5 @@ services:
     depends_on:
       - backend
 
-# ✅ volumes에 있던 pgdata(DB 저장소)도 이제 필요 없으므로 완전 삭제!
+volumes:
+  pgdata:

@@ -147,7 +147,11 @@ def send_verification_email(email: str, code: str) -> None:
         f"{code}. It expires in {settings.EMAIL_CODE_TTL_SECONDS // 60} minutes."
     )
 
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as smtp:
+    with smtplib.SMTP(
+        settings.SMTP_HOST,
+        settings.SMTP_PORT,
+        timeout=settings.SMTP_TIMEOUT_SECONDS,
+    ) as smtp:
         if settings.SMTP_USE_TLS:
             smtp.starttls()
         if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
